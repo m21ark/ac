@@ -11,7 +11,25 @@ def merge_player_info(df_players, df_players_teams):
 
     return df_merged
 
-def player_rankings(df_merged):
+def player_in_team_by_year(df_players_teams):
+    return df_players_teams.groupby(['tmID', 'year'])['playerID'].agg(list).reset_index()
+
+def team_mean(df_players_teams, df_pred):
+    mean_l = []
+
+    for i in df_players_teams['playerID']:
+        # get the 12 best players from the team
+        top_12_players = df_pred[df_pred['playerID'].isin(i)].head(12)
+
+        # add the mean to the team
+        mean_l.append(top_12_players ['predictions'].mean())
+
+
+    df_players_teams['mean'] = mean_l
+    return df_players_teams
+
+
+def player_rankings(df_merged): # TODO: add parameter to remove from a certain year
     # df_merged['PointsPerMin'] = df_merged['Points'].div(df_merged['TotalMinutes'])
     # df_merged['oReboundsPerMin'] = df_merged['TotaloRebounds'].div(df_merged['TotalMinutes'])
     # df_merged['dReboundsPerMin'] = df_merged['TotaldRebounds'].div(df_merged['TotalMinutes'])
