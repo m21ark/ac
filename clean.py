@@ -29,7 +29,78 @@ def team_mean(df_players_teams, df_pred):
     return df_players_teams
 
 
-def player_rankings(df_merged): # TODO: add parameter to remove from a certain year
+def player_ranking_evolution(df_merged, playerID):
+    df_merged = df_merged[df_merged['playerID'] == playerID]
+
+    df_merged = df_merged.groupby(['playerID', 'year']).agg({
+        'Points': 'sum',
+        'TotalMinutes': 'sum',
+        'TotaloRebounds': 'sum',
+        'TotaldRebounds': 'sum',
+        'TotalRebounds': 'sum',
+        'TotalAssists': 'sum',
+        'TotalSteals': 'sum',
+        'TotalBlocks': 'sum',
+        'TotalTurnovers': 'sum',
+        'TotalPF': 'sum',
+        'TotalfgAttempted': 'sum',
+        'TotalfgMade': 'sum',
+        'TotalftAttempted': 'sum',
+        'TotalftMade': 'sum',
+        'TotalthreeAttempted': 'sum',
+        'TotalthreeMade': 'sum',
+        'TotalGP': 'sum'
+    })
+
+    df_merged = df_merged.reset_index()
+
+    df_merged = df_merged.drop(['TotalMinutes','TotalGP'], axis=1)
+
+    players_id = df_merged['playerID']
+    year = df_merged['year']
+
+    gb_model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+
+    # drop all non numerical atributes
+    df_merged = df_merged.select_dtypes(include=['float64', 'int64'])
+    
+
+    df_merged = df_merged.drop(['year'], axis=1)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df_merged)
+
+    df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
+
+
+    df_merged['medium'] = df_merged.mean(axis=1) # TODO: make this not by year but by player years performance
+
+
+    Y_ = df_merged['medium'] 
+
+    gb_model.fit(X_scaled, Y_)
+
+    y_pred = gb_model.predict(X_scaled)
+
+    mse = mean_squared_error(Y_, y_pred)
+
+    # add player Id back and print the predictions for each row
+    df_merged['playerID'] = players_id
+    df_merged['predictions'] = y_pred
+    df_merged['medium'] = Y_
+    df_merged['year'] = year
+
+    # drop all atributes exept playerID, medium and predictions
+    df_pred = df_merged[['year','playerID', 'medium', 'predictions']]
+
+
+    return df_pred
+
+
+def player_rankings(df_merged, year = 10): # TODO: add parameter to remove from a certain year
+
+    df_merged = df_merged[df_merged['year'] <= year]
+
     # df_merged['PointsPerMin'] = df_merged['Points'].div(df_merged['TotalMinutes'])
     # df_merged['oReboundsPerMin'] = df_merged['TotaloRebounds'].div(df_merged['TotalMinutes'])
     # df_merged['dReboundsPerMin'] = df_merged['TotaldRebounds'].div(df_merged['TotalMinutes'])
