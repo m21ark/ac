@@ -97,7 +97,7 @@ def player_ranking_evolution(df_merged, playerID):
     return df_pred
 
 
-def player_rankings(df_merged, year = 10): # TODO: add parameter to remove from a certain year
+def player_rankings(df_merged, year = 10):
 
     df_merged = df_merged[df_merged['year'] <= year]
 
