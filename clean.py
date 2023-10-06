@@ -4,6 +4,73 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
+
+def pipeline_year(year = 10):
+    # Load the datasets
+    df_teams = pandas.read_csv("dataset/teams.csv")
+    df_teams_post = pandas.read_csv("dataset/teams_post.csv")
+    df_series_post = pandas.read_csv("dataset/series_post.csv")
+    df_players = pandas.read_csv("dataset/players.csv")
+    df_players_teams = pandas.read_csv("dataset/players_teams.csv")
+    df_coaches = pandas.read_csv("dataset/coaches.csv")
+    df_awards_players = pandas.read_csv("dataset/awards_players.csv")
+
+    dfs = [df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players]
+    dfs_names = ["teams", "teams_post", "series_post", "players", "players_teams", "coaches", "awards_players"]
+
+    df_players_teams = clean_teams_players(df_players_teams)
+    df_players = clean_players(df_players)
+
+    df_merged = merge_player_info(df_players, df_players_teams)
+
+    # collumn tmID and stint should be dropped
+    df_players_teams = df_players_teams.drop(['tmID', 'stint'], axis=1)
+
+    df_player_ratings = player_rankings(df_merged, year=year-1)
+
+    df_players_teams = player_in_team_by_year(df_merged)
+
+    df_players_teams = team_mean(df_players_teams, df_player_ratings)
+
+    # call model
+
+    #print(df_players_teams, df_teams)
+    # call classification method
+    df_teams = classify_playoff_entry(df_players_teams, df_teams, year)
+
+    # call evaluation function
+
+    return df_teams
+
+def classify_playoff_entry(df_players_teams, df_teams, year):
+    df_teams_at_year = df_players_teams[df_players_teams.year == year]
+    
+    # add to the df_teams at year the division from df_teams
+    df_teams_at_year = df_teams_at_year.merge(df_teams[['tmID', 'year', 'confID']], on=['tmID', 'year'], how='left')
+
+    ea_conf = df_teams_at_year[df_teams_at_year.confID == "EA"]
+    we_conf = df_teams_at_year[df_teams_at_year.confID == "WE"]
+
+    ea_conf = ea_conf.sort_values(by=['mean'], ascending=False)
+    we_conf = we_conf.sort_values(by=['mean'], ascending=False)
+
+    df_teams['playoff'] = "N"
+
+    ea_playoff_teams = ea_conf.head(4)
+    we_playoff_teams = we_conf.head(4)
+
+    print(ea_playoff_teams)
+    print(we_playoff_teams)
+
+    for index, row in ea_playoff_teams.iterrows():
+        row['tmID'] = 'Y'
+
+    for index, row in we_playoff_teams.iterrows():
+        row['tmID'] = 'Y'
+
+    return df_teams
+
+
 def merge_player_info(df_players, df_players_teams):
     df_merged = df_players_teams.merge(df_players, left_on='playerID', right_on='bioID')
 
@@ -275,8 +342,11 @@ def clean_coaches(df):
     
 
 
-df = pandas.read_csv("./dataset/coaches.csv")
+df = pipeline_year(10)
+#print(df)
 
-print(df.head(), end="\n\n\n")
-df = clean_coaches(df)
-print(df.head())
+# df = pandas.read_csv("./dataset/coaches.csv")
+
+#print(df.head(), end="\n\n\n")
+#df = clean_coaches(df)
+# print(df.head())
