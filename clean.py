@@ -30,28 +30,23 @@ def basic_clean(df, cols=[]):
 
 # =============================== CLEANING ===============================
 
-
 def clean_players(df):
     df = basic_clean(df, ['college', 'collegeOther', 'birthDate', 'deathDate'])
     return df
 
 
 def clean_awards_players(df):
-    df = df.loc[:, df.nunique() > 1]
-
-    df = replace_col_with_ids(df, 'award')
+    df = basic_clean(df, ['award'])
     return df
 
 
 def clean_coaches(df):
-    df = df.loc[:, df.nunique() > 1]
-    df = remove_redundant_cols(df)
+    df = basic_clean(df)
     return df
 
 
 def clean_teams_players(df):
-    df = df.loc[:, df.nunique() > 1]
-    df = df.drop(columns=[], axis=1)
+    df = basic_clean(df)
 
     df['TotalGP'] = df.apply(lambda x: x['GP'] + x['PostGP'], axis=1)
     df['Points'] = df.apply(lambda x: x['PostPoints'] + x['points'], axis=1)
