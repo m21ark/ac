@@ -8,7 +8,6 @@ from colorama import Fore, Style
 
 # =============================== UTILS ===============================
 
-
 def remove_redundant_cols(df):
     return df.loc[:, df.nunique() > 1]
 
