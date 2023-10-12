@@ -35,6 +35,7 @@ def pipeline_year(year = 10):
     # call model
     #print(df_players_teams, df_teams)
     # call classification method
+    print(df_teams)
     df_teams, ea_teams, we_teams = classify_playoff_entry(df_players_teams, df_teams, year)
 
     ea_predictions = ea_teams['tmID'].unique()
@@ -345,5 +346,5 @@ def player_rankings(df_merged, year = 10):
     return df_pred
 
 
-
+df = pipeline_year(10)
 
