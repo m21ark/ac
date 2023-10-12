@@ -6,7 +6,6 @@ from sklearn.preprocessing import StandardScaler
 from colorama import Fore, Style
 
 
-
 # =============================== UTILS ===============================
 
 
@@ -23,73 +22,73 @@ def replace_col_with_ids(df, col_name):
     return df
 
 
+def basic_clean(df, cols=[]):
+    df = df.loc[:, df.nunique() > 1]
+    df = df.drop(columns=cols, axis=1)
+    df = remove_redundant_cols(df)
+    return df
+
+
 # =============================== CLEANING ===============================
 
 
-def clean_players(df_players):
-    df_players = df_players.loc[:, df_players.nunique() > 1]
-    df_players = df_players.drop(
-        columns=['college', 'collegeOther', 'birthDate', 'deathDate'], axis=1)
-
-    return df_players
+def clean_players(df):
+    df = basic_clean(df, ['college', 'collegeOther', 'birthDate', 'deathDate'])
+    return df
 
 
 def clean_awards_players(df):
-    df = remove_redundant_cols(df)
+    df = df.loc[:, df.nunique() > 1]
+
     df = replace_col_with_ids(df, 'award')
     return df
 
 
 def clean_coaches(df):
-    df = remove_redundant_cols(df)  # TODO: apply this func to all DFs
+    df = df.loc[:, df.nunique() > 1]
+    df = remove_redundant_cols(df)
     return df
 
 
-def clean_teams_players(df_players_teams):
-    df_players_teams = df_players_teams.loc[:, df_players_teams.nunique() > 1]
+def clean_teams_players(df):
+    df = df.loc[:, df.nunique() > 1]
+    df = df.drop(columns=[], axis=1)
 
-    df_players_teams = df_players_teams.drop(columns=[], axis=1)
-
-    df_players_teams['TotalGP'] = df_players_teams.apply(
-        lambda x: x['GP'] + x['PostGP'], axis=1)
-    df_players_teams['Points'] = df_players_teams.apply(
-        lambda x: x['PostPoints'] + x['points'], axis=1)
-    df_players_teams['TotalMinutes'] = df_players_teams.apply(
+    df['TotalGP'] = df.apply(lambda x: x['GP'] + x['PostGP'], axis=1)
+    df['Points'] = df.apply(lambda x: x['PostPoints'] + x['points'], axis=1)
+    df['TotalMinutes'] = df.apply(
         lambda x: x['minutes'] + x['PostMinutes'], axis=1)
-    df_players_teams['TotaloRebounds'] = df_players_teams.apply(
+    df['TotaloRebounds'] = df.apply(
         lambda x: x['oRebounds'] + x['PostoRebounds'], axis=1)
-    df_players_teams['TotaldRebounds'] = df_players_teams.apply(
+    df['TotaldRebounds'] = df.apply(
         lambda x: x['dRebounds'] + x['PostdRebounds'], axis=1)
-    df_players_teams['TotalRebounds'] = df_players_teams.apply(
+    df['TotalRebounds'] = df.apply(
         lambda x: x['rebounds'] + x['PostRebounds'], axis=1)
-    df_players_teams['TotalAssists'] = df_players_teams.apply(
+    df['TotalAssists'] = df.apply(
         lambda x: x['assists'] + x['PostAssists'], axis=1)
-    df_players_teams['TotalSteals'] = df_players_teams.apply(
+    df['TotalSteals'] = df.apply(
         lambda x: x['steals'] + x['PostSteals'], axis=1)
-    df_players_teams['TotalBlocks'] = df_players_teams.apply(
+    df['TotalBlocks'] = df.apply(
         lambda x: x['blocks'] + x['PostBlocks'], axis=1)
-    df_players_teams['TotalTurnovers'] = df_players_teams.apply(
+    df['TotalTurnovers'] = df.apply(
         lambda x: x['turnovers'] + x['PostTurnovers'], axis=1)
-    df_players_teams['TotalPF'] = df_players_teams.apply(
-        lambda x: x['PF'] + x['PostPF'], axis=1)
-    df_players_teams['TotalfgAttempted'] = df_players_teams.apply(
+    df['TotalPF'] = df.apply(lambda x: x['PF'] + x['PostPF'], axis=1)
+    df['TotalfgAttempted'] = df.apply(
         lambda x: x['fgAttempted'] + x['PostfgAttempted'], axis=1)
-    df_players_teams['TotalfgMade'] = df_players_teams.apply(
+    df['TotalfgMade'] = df.apply(
         lambda x: x['fgMade'] + x['PostfgMade'], axis=1)
-    df_players_teams['TotalftAttempted'] = df_players_teams.apply(
+    df['TotalftAttempted'] = df.apply(
         lambda x: x['ftAttempted'] + x['PostftAttempted'], axis=1)
-    df_players_teams['TotalftMade'] = df_players_teams.apply(
+    df['TotalftMade'] = df.apply(
         lambda x: x['ftMade'] + x['PostftMade'], axis=1)
-    df_players_teams['TotalthreeAttempted'] = df_players_teams.apply(
+    df['TotalthreeAttempted'] = df.apply(
         lambda x: x['threeAttempted'] + x['PostthreeAttempted'], axis=1)
-    df_players_teams['TotalthreeMade'] = df_players_teams.apply(
+    df['TotalthreeMade'] = df.apply(
         lambda x: x['threeMade'] + x['PostthreeMade'], axis=1)
-    df_players_teams['TotalGS'] = df_players_teams.apply(
-        lambda x: x['GS'] + x['PostGS'], axis=1)
-    df_players_teams['TotalDQ'] = df_players_teams.apply(
-        lambda x: x['dq'] + x['PostDQ'], axis=1)
+    df['TotalGS'] = df.apply(lambda x: x['GS'] + x['PostGS'], axis=1)
+    df['TotalDQ'] = df.apply(lambda x: x['dq'] + x['PostDQ'], axis=1)
 
-    df_players_teams = df_players_teams.drop(['GP', 'PostGP', 'points', 'PostPoints', 'minutes', 'PostMinutes', 'oRebounds', 'PostoRebounds', 'dRebounds', 'PostdRebounds', 'rebounds', 'PostRebounds', 'assists', 'PostAssists', 'steals', 'PostSteals', 'blocks', 'PostBlocks',
-                                             'turnovers', 'PostTurnovers', 'PF', 'PostPF', 'fgAttempted', 'PostfgAttempted', 'fgMade', 'PostfgMade', 'ftAttempted', 'PostftAttempted', 'ftMade', 'PostftMade', 'threeAttempted', 'PostthreeAttempted', 'threeMade', 'PostthreeMade', 'GS', 'PostGS', 'dq', 'PostDQ'], axis=1)
+    df = df.drop(['GP', 'PostGP', 'points', 'PostPoints', 'minutes', 'PostMinutes', 'oRebounds', 'PostoRebounds', 'dRebounds', 'PostdRebounds', 'rebounds', 'PostRebounds', 'assists', 'PostAssists', 'steals', 'PostSteals', 'blocks', 'PostBlocks',
+                  'turnovers', 'PostTurnovers', 'PF', 'PostPF', 'fgAttempted', 'PostfgAttempted', 'fgMade', 'PostfgMade', 'ftAttempted', 'PostftAttempted', 'ftMade', 'PostftMade', 'threeAttempted', 'PostthreeAttempted', 'threeMade', 'PostthreeMade', 'GS', 'PostGS', 'dq', 'PostDQ'], axis=1)
 
-    return df_players_teams
+    return df
