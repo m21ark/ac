@@ -35,7 +35,6 @@ def pipeline_year(year = 10):
     df_players_teams = team_mean(df_players_teams, df_player_ratings)
 
     # call model
-
     #print(df_players_teams, df_teams)
     # call classification method
     df_teams, ea_teams, we_teams = classify_playoff_entry(df_players_teams, df_teams, year)
@@ -416,12 +415,11 @@ def clean_coaches(df):
 
     
 
+df_coaches = pandas.read_csv("dataset/coaches.csv")
 
-df = pipeline_year(10)
-#print(df)
 
-# df = pandas.read_csv("./dataset/coaches.csv")
 
-#print(df.head(), end="\n\n\n")
-#df = clean_coaches(df)
-# print(df.head())
+print(df_coaches)
+
+#df = pipeline_year(10)
+
