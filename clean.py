@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
+from colorama import Fore, Style
+
 
 
 # =============================== UTILS ===============================
