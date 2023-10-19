@@ -17,7 +17,8 @@ def replace_col_with_ids(df, col_name):
     award_mapping = {award: i for i,
                      award in enumerate(unique_awards, start=1)}
 
-    df[col_name] = df[col_name].replace(award_mapping)
+    # df[col_name] = df[col_name].replace(award_mapping)
+    df.loc[:, col_name] = df.loc[:, col_name].replace(award_mapping)
     return df
 
 
@@ -36,7 +37,7 @@ def clean_players(df):
 
 
 def clean_awards_players(df):
-    df = basic_clean(df, ['award'])
+    df = basic_clean(df)
     return df
 
 

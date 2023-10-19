@@ -20,23 +20,34 @@ def pipeline_year(year = 10):
 
     df_players_teams = clean_teams_players(df_players_teams)
     df_players = clean_players(df_players)
+    df_coaches = clean_coaches(df_coaches)
+    df_awards_players = clean_awards_players(df_awards_players)
+
+    df_awards_players, df_awards_coaches = separate_awards_info(df_awards_players, year)
+
+    # Give the number of awards to players and coaches
+    df_players = merge_awards_info(df_players, df_awards_players, year)
+    df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
+
 
     df_merged = merge_player_info(df_players, df_players_teams)
 
     # collumn tmID and stint should be dropped
     df_players_teams = df_players_teams.drop(['tmID', 'stint'], axis=1)
 
+    print(df_merged)
     df_player_ratings = player_rankings(df_merged, year=year-1)
 
+    
     df_players_teams = player_in_team_by_year(df_merged)
 
     df_players_teams = team_mean(df_players_teams, df_player_ratings)
 
-    # call model
-    #print(df_players_teams, df_teams)
-    # call classification method
-    print(df_teams)
-    df_teams, ea_teams, we_teams = classify_playoff_entry(df_players_teams, df_teams, year)
+    df_teams_merged = df_players_teams.merge(df_teams[['tmID', 'year', 'confID']], on=['tmID', 'year'], how='left')
+    
+    df_merged = merge_coach_info(df_teams_merged, df_coaches)
+
+    df_teams, ea_teams, we_teams = classify_playoff_entry(df_teams_merged, year)
 
     ea_predictions = ea_teams['tmID'].unique()
     we_predictions = we_teams['tmID'].unique()
@@ -45,11 +56,8 @@ def pipeline_year(year = 10):
 
     return df_teams
 
-def classify_playoff_entry(df_players_teams, df_teams, year):
-    df_teams_at_year = df_players_teams[df_players_teams.year == year]
-    
-    # add to the df_teams at year the division from df_teams
-    df_teams_at_year = df_teams_at_year.merge(df_teams[['tmID', 'year', 'confID']], on=['tmID', 'year'], how='left')
+def classify_playoff_entry(df_teams, year):
+    df_teams_at_year = df_teams[df_teams.year == year]
 
     ea_conf = df_teams_at_year[df_teams_at_year.confID == "EA"]
     we_conf = df_teams_at_year[df_teams_at_year.confID == "WE"]
@@ -154,6 +162,37 @@ def merge_player_info(df_players, df_players_teams):
 
     return df_merged
 
+def merge_coach_info(df_teams, df_coaches):
+    df_coaches = df_coaches.rename(columns={'bioID': 'coachID'})
+    df_coaches = df_coaches[df_coaches['stint'] <= 1]
+    df_coaches = df_coaches.drop(['stint'], axis=1)
+    df_merged = df_teams.merge(df_coaches, left_on=['tmID', 'year'], right_on=['tmID', 'year'])
+
+    return df_merged
+
+def separate_awards_info(df_awards_players, year):
+    df_awards_players = df_awards_players[df_awards_players['year'] < year]
+    # Get the awards that contain the word coach in any case
+    df_awards_coaches = df_awards_players[df_awards_players['award'].str.contains('coach', case=False)]
+    df_awards_players = df_awards_players[~df_awards_players['award'].str.contains('coach', case=False)]
+    
+    return df_awards_players, df_awards_coaches
+
+def merge_awards_info(df_players, df_awards_players, year):
+    df_awards_players = df_awards_players[df_awards_players['year'] < year]
+    df_awards_players = df_awards_players.groupby(['playerID']).agg({
+        'award': 'count'
+    })
+    df_awards_players = df_awards_players.reset_index()
+    # Rename playerID or coach to bioID in awards_players
+    df_awards_players = df_awards_players.rename(columns={'playerID': 'bioID'})
+    df_awards_players = df_awards_players.rename(columns={'coachID': 'bioID'})
+    df_players = df_players.rename(columns={'coachID': 'bioID'})
+    df_players = df_players.merge(df_awards_players, left_on='bioID', right_on='bioID', how='left')
+    df_players['award'] = df_players['award'].fillna(0)
+    df_players['award'] = df_players['award'].astype(int)
+    return df_players
+    
 
 def player_in_team_by_year(df_players_teams):
     return df_players_teams.groupby(['tmID', 'year'])['playerID'].agg(list).reset_index()
@@ -193,7 +232,8 @@ def player_ranking_evolution(df_merged, playerID):
         'TotalftMade': 'sum',
         'TotalthreeAttempted': 'sum',
         'TotalthreeMade': 'sum',
-        'TotalGP': 'sum'
+        'TotalGP': 'sum',
+        'award': 'sum',
     })
 
     df_merged = df_merged.reset_index()
