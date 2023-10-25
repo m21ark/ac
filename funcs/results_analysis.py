@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
 
-def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoffs):
+def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoffs, display_results=True):
 
     # Auxiliary function to color the text
     def color_text(predicted, actual):
@@ -66,15 +66,19 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
 
     total_accuracy = ((we_correct_count + ea_correct_count) / 8.0) * 100
 
-    print("=" * 40)
-    print(f"{'Year:':<20}{year}")
-    print("=" * 40)
-    print("WE")
-    print(f"{'Guesses:':<15}{color_text(we_correct, actual_we_playoffs) + ', ' + color_text(we_incorrect, actual_we_playoffs) }")
-    print(f"{'Missed:':<15}{', '.join(set(actual_we_playoffs) - set(we_correct))}")
-    print("=" * 40)
-    print("EA")
-    print(f"{'Guesses:':<15}{color_text(ea_correct, actual_ea_playoffs) + ', ' + color_text(ea_incorrect, actual_ea_playoffs)}")
-    print(f"{'Missed:':<15}{', '.join(set(actual_ea_playoffs) - set(ea_correct))}")
-    print("=" * 40)
-    print(f"{'Total accuracy:':<20}{total_accuracy:.2f}%")
+    if display_results:
+        print("\n")
+        print("=" * 40)
+        print(f"{'Year:':<20}{year}")
+        print("=" * 40)
+        print("WE")
+        print(f"{'Guesses:':<15}{color_text(we_correct, actual_we_playoffs) + ', ' + color_text(we_incorrect, actual_we_playoffs) }")
+        print(f"{'Missed:':<15}{', '.join(set(actual_we_playoffs) - set(we_correct))}")
+        print("=" * 40)
+        print("EA")
+        print(f"{'Guesses:':<15}{color_text(ea_correct, actual_ea_playoffs) + ', ' + color_text(ea_incorrect, actual_ea_playoffs)}")
+        print(f"{'Missed:':<15}{', '.join(set(actual_ea_playoffs) - set(ea_correct))}")
+        print("=" * 40)
+        print(f"{'Total accuracy:':<20}{total_accuracy:.2f}%\n")
+
+    return total_accuracy

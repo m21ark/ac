@@ -20,8 +20,8 @@ def classify_playoff_entry(df_teams, year):
     ea_playoff_teams = ea_conf.head(4)
     we_playoff_teams = we_conf.head(4)
 
-    print(ea_playoff_teams)
-    print(we_playoff_teams)
+    # print(ea_playoff_teams)
+    # print(we_playoff_teams)
 
     for _, row in ea_playoff_teams.iterrows():
         row['playoff'] = 'Y'

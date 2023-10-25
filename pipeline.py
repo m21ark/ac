@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from funcs.statistical_analysis import *
 from funcs.results_analysis import *
@@ -50,7 +51,10 @@ def apply_cleaning():
     df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
 
 
-def pipeline_year(year=10):
+def pipeline_year(year=10, display_results=False):
+
+    if year > 10 or year < 2:
+        raise ValueError("Year must be between 2 and 10")
 
     # Load the clean datasets
     df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
@@ -66,11 +70,8 @@ def pipeline_year(year=10):
     # collumn tmID and stint should be dropped
     df_players_teams = df_players_teams.drop(['tmID', 'stint'], axis=1)
 
-    print(df_merged)
     df_player_ratings = player_rankings(df_merged, year=year-1)
-
     df_players_teams = player_in_team_by_year(df_merged)
-
     df_players_teams = team_mean(df_players_teams, df_player_ratings)
 
     df_teams_merged = df_players_teams.merge(
@@ -84,11 +85,35 @@ def pipeline_year(year=10):
     ea_predictions = ea_teams['tmID'].unique()
     we_predictions = we_teams['tmID'].unique()
 
-    calculate_playoff_accuracy(year, ea_predictions, we_predictions)
+    accuracy = calculate_playoff_accuracy(
+        year, ea_predictions, we_predictions, display_results)
 
-    return df_teams
+    return accuracy
+
+
+def check_accuracy_by_year():
+    accs = []
+    for year in range(2, 11):
+        acc = pipeline_year(year)
+        accs.append(acc)
+
+    # plot the accuracy line graph
+    plt.plot(range(2, 11), accs, label="Accuracy")
+
+    # add tags for Y on each X
+    for i, acc in enumerate(accs):
+        plt.text(i+2, acc, f"{acc:.2f}", ha="center", va="bottom")
+
+    # add legend
+    plt.legend()
+
+    plt.xlabel("Year")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy by year")
+    plt.show()
 
 
 if __name__ == "__main__":
     apply_cleaning()
-    df = pipeline_year(10)
+    check_accuracy_by_year()
+    # pipeline_year(5)
