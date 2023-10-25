@@ -4,6 +4,7 @@ import numpy as np
 from funcs.statistical_analysis import *
 from funcs.results_analysis import *
 from funcs.merge import *
+from funcs.clean import *
 
 
 def load_data():
@@ -19,9 +20,39 @@ def load_data():
     return [df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players]
 
 
+def apply_cleaning():
+
+    # Loading Original DataFrames
+    df_teams = pd.read_csv("dataset/original/teams.csv")
+    df_teams_post = pd.read_csv("dataset/original/teams_post.csv")
+    df_series_post = pd.read_csv("dataset/original/series_post.csv")
+    df_players = pd.read_csv("dataset/original/players.csv")
+    df_players_teams = pd.read_csv("dataset/original/players_teams.csv")
+    df_coaches = pd.read_csv("dataset/original/coaches.csv")
+    df_awards_players = pd.read_csv("dataset/original/awards_players.csv")
+
+    # Cleaning DataFrames
+    df_players = clean_players(df_players)
+    df_awards_players = clean_awards_players(df_awards_players)
+    df_coaches = clean_coaches(df_coaches)
+    df_players_teams = clean_teams_players(df_players_teams)
+    df_series_post = clean_series_post(df_series_post)
+    df_teams_post = clean_teams_post(df_teams_post)
+    df_teams = clean_teams(df_teams)
+
+    # Saving DataFrames to CSV
+    df_players.to_csv("dataset/cleaned/players.csv", index=False)
+    df_awards_players.to_csv("dataset/cleaned/awards_players.csv", index=False)
+    df_coaches.to_csv("dataset/cleaned/coaches.csv", index=False)
+    df_players_teams.to_csv("dataset/cleaned/players_teams.csv", index=False)
+    df_series_post.to_csv("dataset/cleaned/series_post.csv", index=False)
+    df_teams_post.to_csv("dataset/cleaned/teams_post.csv", index=False)
+    df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
+
+
 def pipeline_year(year=10):
 
-    # set all the dataframes
+    # Load the clean datasets
     df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
 
     df_awards_players, df_awards_coaches = separate_awards_info(
@@ -30,7 +61,6 @@ def pipeline_year(year=10):
     # Give the number of awards to players and coaches
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
-
     df_merged = merge_player_info(df_players, df_players_teams)
 
     # collumn tmID and stint should be dropped
@@ -60,4 +90,5 @@ def pipeline_year(year=10):
 
 
 if __name__ == "__main__":
+    apply_cleaning()
     df = pipeline_year(10)
