@@ -64,6 +64,10 @@ def clean_teams(df):
     df['confID'] = df['confID'].replace(
         {'West': 0, 'East': 1})  # ver se isto não dá problemas
 
+    # replace Playoffs with 1 and 0 instead of Y and N
+    df['playoff'] = df['playoff'].replace('Y', 1)
+    df['playoff'] = df['playoff'].replace('N', 0)
+
     # replace df features firstRound, semis, final with a single feature named RoundReached with values 0, 1, 2, 3
     # 0 - not reached
     # 1 - first round
