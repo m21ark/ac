@@ -115,5 +115,5 @@ def check_accuracy_by_year():
 
 if __name__ == "__main__":
     apply_cleaning()
-    check_accuracy_by_year()
-    # pipeline_year(5)
+    # check_accuracy_by_year()
+    print(pipeline_year(10))

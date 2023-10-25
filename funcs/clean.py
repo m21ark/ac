@@ -29,6 +29,7 @@ def basic_clean(df, cols=[]):
 
 def clean_players(df):
     df = basic_clean(df, ['college', 'collegeOther', 'birthDate', 'deathDate'])
+    # TODO: There are players with zero height and weight
     return df
 
 
@@ -85,8 +86,8 @@ def clean_teams(df):
     df['finals'] = df['finals'].replace('L', 0)
     df['finals'] = df['finals'].fillna(0)
 
-    df['RoundReached'] = df['firstRound'] + \
-        df['semis'] + df['finals']
+    df['RoundReached'] = (
+        df['firstRound'] + df['semis'] + df['finals']).astype(int)
 
     df = df.drop(columns=['firstRound', 'semis', 'finals'], axis=1)
 
@@ -111,6 +112,24 @@ def clean_teams(df):
     # Conf League wins and losses n parece influenciar o acesso a playoffs mas convém ver se tem algo a ver
     # remove confW and confL
     df = df.drop(columns=['confW', 'confL'], axis=1)
+
+    # Calculate offensive ratio statistics (higher is better)
+    df['of_goal'] = round(df['o_fgm'] / df['o_fga'], 2)
+    df['of_3pt'] = round(df['o_3pm'] / df['o_3pa'], 2)
+    df['of_throw'] = round(df['o_ftm'] / df['o_fta'], 2)
+    df['of_reb'] = df['o_reb']
+    df['of_assist'] = round(df['o_asts'] / df['o_to'], 2)
+
+    # Calculate defensive ratio statistics (lower is better)
+    df['df_goal'] = round(df['d_fgm'] / df['d_fga'], 2)
+    df['df_3pt'] = round(df['d_3pm'] / df['d_3pa'], 2)
+    df['df_throw'] = round(df['d_ftm'] / df['d_fta'], 2)
+    df['df_reb'] = df['d_reb']
+    df['df_steal'] = df['d_stl']
+
+    # Drop the columns you no longer need
+    df.drop(['o_fgm', 'o_fga', 'o_ftm', 'o_fta', 'o_3pm', 'o_3pa', 'o_reb', 'o_asts', 'o_to',
+            'd_fgm', 'd_fga', 'd_ftm', 'd_fta', 'd_3pm', 'd_3pa', 'd_reb', 'd_stl'], axis=1, inplace=True)
 
     return df
 

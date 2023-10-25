@@ -27,9 +27,9 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
                             & (results_df['confID'] == 'EA')]
 
     actual_we_playoffs = year_df_we[year_df_we['playoff']
-                                    == 'Y']['tmID'].tolist()
+                                    == 1]['tmID'].tolist()
     actual_ea_playoffs = year_df_ea[year_df_ea['playoff']
-                                    == 'Y']['tmID'].tolist()
+                                    == 1]['tmID'].tolist()
 
     all_we_teams = year_df_we['tmID'].tolist()
     all_ea_teams = year_df_ea['tmID'].tolist()
