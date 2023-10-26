@@ -6,14 +6,24 @@ def merge_player_info(df_players, df_players_teams):
     return df_merged
 
 
-def merge_coach_info(df_teams, df_coaches):
-    df_coaches = df_coaches.rename(columns={'bioID': 'coachID'})
-    df_coaches = df_coaches[df_coaches['stint'] <= 1]
-    df_coaches = df_coaches.drop(['stint'], axis=1)
-    df_merged = df_teams.merge(
-        df_coaches, left_on=['tmID', 'year'], right_on=['tmID', 'year'])
+def merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches):
+    
+    # merge df_coaches features year and tmID when stint = 0 to df_coach_ratings and then to df_teams_merged
+    df_coaches = df_coaches[df_coaches['stint'] == 0]
+    df_coaches = df_coaches[['coachID', 'tmID', 'year']]
 
-    return df_merged
+
+    df_coach_ratings = df_coach_ratings.merge(
+        df_coaches, left_on=['coachID'],right_on=['coachID'], how="right")
+
+    df_teams_merged = df_teams_merged.merge(
+        df_coach_ratings, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
+    
+    #fill na with 0
+    df_teams_merged = df_teams_merged.fillna(0) # default value for coach ratings is 0
+
+
+    return df_teams_merged
 
 
 def separate_awards_info(df_awards_players, year):

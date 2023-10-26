@@ -63,8 +63,8 @@ def pipeline_year(year=10, display_results=False):
         df_awards_players, year)
 
     # Give the number of awards to players and coaches
-    df_players = merge_awards_info(df_players, df_awards_players, year)
-    df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
+    #df_players = merge_awards_info(df_players, df_awards_players, year)
+    #df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
     df_merged = merge_player_info(df_players, df_players_teams)
 
     # collumn tmID and stint should be dropped
@@ -77,7 +77,19 @@ def pipeline_year(year=10, display_results=False):
     df_teams_merged = df_players_teams.merge(
         df_teams[['tmID', 'year', 'confID']], on=['tmID', 'year'], how='left')
 
-    df_merged = merge_coach_info(df_teams_merged, df_coaches)
+    #df_merged = merge_coach_info(df_teams_merged, df_coaches)
+    df_coach_ratings = coach_ranking(df_coaches, year=year)
+
+    df_teams_merged = merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches)
+
+    print(df_teams_merged.head(10))
+
+    # add coachID back to df_teams_merged
+
+
+    #add the coach ratings to the df_teams_merged on the coachID and yeat
+    #df_teams_merged = df_teams_merged.merge(
+     #   df_coach_ratings, on=['coachID'], how='left') 
 
     df_teams, ea_teams, we_teams = classify_playoff_entry(
         df_teams_merged, year)

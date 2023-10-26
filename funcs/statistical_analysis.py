@@ -116,6 +116,29 @@ def player_ranking_evolution(df_merged, playerID):
 
     return df_pred
 
+def coach_ranking(df_coaches, year):
+
+     df_coaches = df_coaches[df_coaches['year'] < year]
+
+     df_coaches['win_percentage_coach'] = (df_coaches['won'] + df_coaches['post_wins']) / (df_coaches['won'] +
+                                                                                                                  df_coaches['lost'] + df_coaches['post_wins'] + df_coaches['post_losses'])
+     df_coach_stats = df_coaches.groupby(['coachID']).agg({
+         'win_percentage_coach': 'mean',
+     })
+     df_coach_stats = df_coach_stats.reset_index()
+
+     # use standard scaler to scale the data
+     scaler = StandardScaler()
+     X_scaled = scaler.fit_transform(df_coach_stats.select_dtypes(include=[float]))
+
+     df_coach_stats_scaled = pandas.DataFrame(X_scaled, columns=df_coach_stats.select_dtypes(include=[float]).columns)
+
+     # restore the string features after scaling
+     df_coach_stats_scaled[['coachID']] = df_coach_stats[['coachID']]
+     #df_coach_stats_scaled[['win_percentage_coach']] = df_coach_stats[['win_percentage_coach']]
+
+     return df_coach_stats_scaled
+
 
 def player_rankings(df_merged, year=10):
 
