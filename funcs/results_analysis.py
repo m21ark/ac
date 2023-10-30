@@ -82,3 +82,39 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
         print(f"{'Total accuracy:':<20}{total_accuracy:.2f}%\n")
 
     return total_accuracy
+
+
+def remove_currently_unknown_data(df_teams, year):
+    # Remove all columns that are unknown at the start of the season on a given year
+    # And replace them by the mean of the previous 2 years
+
+    columns_with_unknown_data = [
+        'o_oreb', 'o_dreb', 'o_pf', 'o_stl', 'o_blk', 'o_pts',
+        'd_oreb', 'd_dreb', 'd_asts', 'd_pf', 'd_to', 'd_blk', 'd_pts',
+        'min', 'attend', 'RoundReached', 'winPercentage',
+        'homeWinPercentage', 'awayWinPercentage', 'of_goal',
+        'of_3pt', 'of_throw', 'of_reb', 'of_assist', 'df_goal',
+        'df_3pt', 'df_throw', 'df_reb', 'df_steal'
+    ]
+
+    if year <= 2:
+        # For the 1st and 2nd years, we don't have data from 2 previous years
+        # So we just remove the columns
+        df_teams = df_teams.drop(columns=columns_with_unknown_data)
+        return df_teams
+
+    for column in columns_with_unknown_data:
+        previous_years = [year - 1, year - 2]
+
+        # Calculate the mean of the previous 2 years
+        mean_values = df_teams[df_teams['year'].isin(
+            previous_years)][column].mean()
+
+        # Replace missing values in the current year with the mean
+        df_teams.loc[df_teams['year'] == year,
+                     column] = df_teams.loc[df_teams['year'] == year, column].fillna(mean_values)
+
+    # Set "playoff" to be blank for the current year
+    df_teams.loc[df_teams['year'] == year, 'playoff'] = None
+
+    return df_teams
