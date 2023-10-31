@@ -9,6 +9,8 @@ from funcs.clean import *
 
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
 
 def load_data():
     # Load the clean datasets
@@ -52,7 +54,30 @@ def apply_cleaning():
     df_teams_post.to_csv("dataset/cleaned/teams_post.csv", index=False)
     df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
 
-def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players, year) :
+
+def expanding_window_decay_cross_validation(data, model_func, features, year, decay_rate=0.8):
+    clf = model_func()
+
+    for i in range(1, year):
+        train_data = data[data['year'] == i]
+
+        X_train = train_data[features]
+        y_train = train_data['playoff']
+
+        # Apply weight to older data
+        weight = decay_rate ** (year - i - 1)
+        sample_weight = [weight] * len(X_train)
+
+        if type(model_func()).__name__ in ["KNeighborsClassifier", "MLPClassifier"]:
+            # This model don't support sample weights
+            clf.fit(X_train, y_train)
+        else:
+            clf.fit(X_train, y_train, sample_weight=sample_weight)
+
+    return clf
+
+
+def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players, year):
 
     df_awards_players, df_awards_coaches = separate_awards_info(
         df_awards_players, year)
@@ -69,35 +94,46 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_teams_merged = df_players_teams.merge(
         df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
 
-    #df_merged = merge_coach_info(df_teams_merged, df_coaches)
+    # df_merged = merge_coach_info(df_teams_merged, df_coaches)
     df_coach_ratings = coach_ranking(df_coaches, year=year)
 
     # df_coaches = df_coaches.rename(columns={'bioID': 'coachID'})
     # print (df_teams_merged)
 
-    df_teams_merged = merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches)
+    df_teams_merged = merge_coach_info(
+        df_teams_merged, df_coach_ratings, df_coaches)
 
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
 
-    df_teams_merged = merge_add_awards(df_teams_merged, df_players, df_coaches, year)
+    df_teams_merged = merge_add_awards(
+        df_teams_merged, df_players, df_coaches, year)
 
     df_teams_merged = df_teams_merged.drop(['coachID', 'playerID'], axis=1)
 
     return df_teams_merged
 
-def model_classification(df_teams_merged, year) :
+
+def model_classification(df_teams_merged, year):
     # teams on year
     test = df_teams_merged[df_teams_merged['year'] == year]
     train = df_teams_merged[df_teams_merged['year'] != year]
 
     # use a MLP to predict the playoff entry
 
-    #convert the confID to a number
+    # convert the confID to a number
     train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
     test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
 
-    clf = RandomForestClassifier(n_estimators=20, random_state=42)
+    models = [
+        lambda: RandomForestClassifier(n_estimators=100, random_state=42),
+        lambda: GradientBoostingClassifier(
+            n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42),
+    ]
+
+    clf = expanding_window_decay_cross_validation(
+        train.drop(['tmID'], axis=1), models[0], train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
+
     clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
     predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
 
@@ -107,6 +143,7 @@ def model_classification(df_teams_merged, year) :
 
     return df_teams_merged
 
+
 def pipeline_year(year=10, display_results=False):
 
     if year > 10 or year < 2:
@@ -115,14 +152,14 @@ def pipeline_year(year=10, display_results=False):
     # Load the clean datasets
     df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
 
-    df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post, 
+    df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
     df_teams_merged = model_classification(df_teams_merged, year)
 
-    #add the coach ratings to the df_teams_merged on the coachID and yeat
-    #df_teams_merged = df_teams_merged.merge(
-     #   df_coach_ratings, on=['coachID'], how='left') 
+    # add the coach ratings to the df_teams_merged on the coachID and yeat
+    # df_teams_merged = df_teams_merged.merge(
+    #   df_coach_ratings, on=['coachID'], how='left')
 
     df_teams, ea_teams, we_teams = classify_playoff_entry(
         df_teams_merged, year)
