@@ -52,14 +52,7 @@ def apply_cleaning():
     df_teams_post.to_csv("dataset/cleaned/teams_post.csv", index=False)
     df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
 
-
-def pipeline_year(year=10, display_results=False):
-
-    if year > 10 or year < 2:
-        raise ValueError("Year must be between 2 and 10")
-
-    # Load the clean datasets
-    df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
+def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players, year) :
 
     df_awards_players, df_awards_coaches = separate_awards_info(
         df_awards_players, year)
@@ -91,6 +84,9 @@ def pipeline_year(year=10, display_results=False):
 
     df_teams_merged = df_teams_merged.drop(['coachID', 'playerID'], axis=1)
 
+    return df_teams_merged
+
+def model_classification(df_teams_merged, year) :
     # teams on year
     test = df_teams_merged[df_teams_merged['year'] == year]
     train = df_teams_merged[df_teams_merged['year'] != year]
@@ -101,8 +97,7 @@ def pipeline_year(year=10, display_results=False):
     train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
     test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
 
-
-    clf = RandomForestClassifier(n_estimators=100, random_state=42)
+    clf = RandomForestClassifier(n_estimators=20, random_state=42)
     clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
     predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
 
@@ -110,6 +105,20 @@ def pipeline_year(year=10, display_results=False):
     df_teams_merged['predictions'] = 0
     df_teams_merged.loc[df_teams_merged['year'] == year, 'predictions'] = predictions
 
+    return df_teams_merged
+
+def pipeline_year(year=10, display_results=False):
+
+    if year > 10 or year < 2:
+        raise ValueError("Year must be between 2 and 10")
+
+    # Load the clean datasets
+    df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
+
+    df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post, 
+                                   df_players, df_players_teams, df_coaches, df_awards_players, year)
+
+    df_teams_merged = model_classification(df_teams_merged, year)
 
     #add the coach ratings to the df_teams_merged on the coachID and yeat
     #df_teams_merged = df_teams_merged.merge(
