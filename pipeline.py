@@ -55,7 +55,7 @@ def apply_cleaning():
     df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
 
 
-def expanding_window_decay_cross_validation(data, model_func, features, year, decay_rate=0.8):
+def expanding_window_decay_cross_validation(data, model_func, features, year, decay_rate=0.5):
     clf = model_func()
 
     for i in range(1, year):
