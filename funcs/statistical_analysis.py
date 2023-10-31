@@ -12,8 +12,8 @@ def classify_playoff_entry(df_teams, year):
     ea_conf = df_teams_at_year[df_teams_at_year.confID == "EA"]
     we_conf = df_teams_at_year[df_teams_at_year.confID == "WE"]
 
-    ea_conf = ea_conf.sort_values(by=['mean'], ascending=False)
-    we_conf = we_conf.sort_values(by=['mean'], ascending=False)
+    ea_conf = ea_conf.sort_values(by=['predictions'], ascending=False)
+    we_conf = we_conf.sort_values(by=['predictions'], ascending=False)
 
     df_teams['playoff'] = "N"
 
@@ -140,9 +140,10 @@ def coach_ranking(df_coaches, year):
      return df_coach_stats_scaled
 
 
-def player_rankings(df_merged, year=10):
+def player_rankings(df_merged, year=10): # note : year is the last year to count
 
     df_merged = df_merged[df_merged['year'] <= year]
+    # df_merged = df_merged[df_merged['year'] >= year-4]
 
     # df_merged['PointsPerMin'] = df_merged['Points'].div(df_merged['TotalMinutes'])
     # df_merged['oReboundsPerMin'] = df_merged['TotaloRebounds'].div(df_merged['TotalMinutes'])

@@ -7,6 +7,8 @@ from funcs.results_analysis import *
 from funcs.merge import *
 from funcs.clean import *
 
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 def load_data():
     # Load the clean datasets
@@ -72,7 +74,7 @@ def pipeline_year(year=10, display_results=False):
     df_players_teams = team_mean(df_players_teams, df_player_ratings)
 
     df_teams_merged = df_players_teams.merge(
-        df_teams[['tmID', 'year', 'confID']], on=['tmID', 'year'], how='left')
+        df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
 
     #df_merged = merge_coach_info(df_teams_merged, df_coaches)
     df_coach_ratings = coach_ranking(df_coaches, year=year)
@@ -88,10 +90,25 @@ def pipeline_year(year=10, display_results=False):
     df_teams_merged = merge_add_awards(df_teams_merged, df_players, df_coaches, year)
 
     df_teams_merged = df_teams_merged.drop(['coachID', 'playerID'], axis=1)
-    print(df_teams_merged)
+
+    # teams on year
+    test = df_teams_merged[df_teams_merged['year'] == year]
+    train = df_teams_merged[df_teams_merged['year'] != year]
+
+    # use a MLP to predict the playoff entry
+
+    #convert the confID to a number
+    train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
+    test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
 
 
-    # add coachID back to df_teams_merged
+    clf = RandomForestClassifier(n_estimators=100, random_state=42)
+    clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
+    predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
+
+    test['predictions'] = predictions
+    df_teams_merged['predictions'] = 0
+    df_teams_merged.loc[df_teams_merged['year'] == year, 'predictions'] = predictions
 
 
     #add the coach ratings to the df_teams_merged on the coachID and yeat
