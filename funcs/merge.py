@@ -52,3 +52,27 @@ def merge_awards_info(df_players, df_awards_players, year):
     df_players['award'] = df_players['award'].fillna(0)
     df_players['award'] = df_players['award'].astype(int)
     return df_players
+
+
+
+def merge_add_awards(df_teams_merged, df_players, df_coaches, year):
+    df_teams_merged['awards'] = 0
+    # for every player in df_teams_merged playerID add the award of that player
+    for index, row in df_teams_merged.iterrows():
+        playerID = row['playerID']
+        for i in playerID:
+            df_player = df_players[df_players['bioID'] == i]
+            award = df_player['award'].values[0]
+            df_teams_merged.at[index, 'awards'] += award
+    
+    # # for every coach in df_teams_merged coachID add the award of that coach
+   
+    ## TODO: add the coahes awards
+    
+
+    # coachID = df_teams_merged['bioID']
+    # df_coach = df_coaches[df_coaches['bioID'] == coachID]
+    # award = df_coach['award'].values[0]
+    # df_teams_merged.at[index, 'awards'] += award
+    
+    return df_teams_merged
