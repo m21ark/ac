@@ -175,23 +175,30 @@ def pipeline_year(year=10, display_results=False):
 
 def check_accuracy_by_year():
     accs = []
-    for year in range(2, 11):
+    years = list(range(2, 11))
+
+    for year in years:
         acc = pipeline_year(year)
         accs.append(acc)
 
     # plot the accuracy line graph
-    plt.plot(range(2, 11), accs, label="Accuracy")
+    plt.plot(years, accs, label="Accuracy", marker='o', linestyle='-')
 
-    # add tags for Y on each X
-    for i, acc in enumerate(accs):
-        plt.text(i+2, acc, f"{acc:.2f}", ha="center", va="bottom")
+    # add labels for each data point
+    # for i, acc in enumerate(accs):
+      #  plt.text(years[i], acc, f"{acc:.2f}", ha="center", va="bottom")
 
     # add legend
     plt.legend()
 
+    # set Y-axis limits
+    plt.ylim(50, 100)
+
     plt.xlabel("Year")
     plt.ylabel("Accuracy")
     plt.title("Accuracy by year")
+    plt.grid(True)
+
     plt.show()
 
 
