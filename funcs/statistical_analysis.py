@@ -36,17 +36,30 @@ def player_in_team_by_year(df_players_teams):
     return df_players_teams.groupby(['tmID', 'year'])['playerID'].agg(list).reset_index()
 
 
-def team_mean(df_players_teams, df_pred):
+def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive_player_stats):
     mean_l = []
-
+    mean_o = []
+    mean_d = []
     for i in df_players_teams['playerID']:
         # get the 12 best players from the team
-        top_12_players = df_pred[df_pred['playerID'].isin(i)].head(12)
+        top_12_players = df_pred[df_pred['playerID'].isin(i)].sort_values(by=['predictions'], ascending=False).head(12)
 
         # add the mean to the team
         mean_l.append(top_12_players['predictions'].mean())
 
-    df_players_teams['mean'] = mean_l
+        top_12_offensive_players = df_offensive_player_stats[df_offensive_player_stats['playerID']
+                                                             .isin(i)].sort_values(by=['predictions'], ascending=False).head(12)
+
+        mean_o.append(top_12_offensive_players['predictions'].mean())
+
+        top_12_defensive_players = df_defensive_player_stats[df_defensive_player_stats['playerID']
+                                                             .isin(i)].sort_values(by=['predictions'], ascending=False).head(12)
+        
+        mean_d.append(top_12_defensive_players['predictions'].mean())
+
+    #df_players_teams['mean'] = mean_l
+    df_players_teams['offensive_strength'] = mean_o
+    df_players_teams['defensive_strength'] = mean_d
     return df_players_teams
 
 
@@ -127,6 +140,9 @@ def coach_ranking(df_coaches, year):
      })
      df_coach_stats = df_coach_stats.reset_index()
 
+     #divide win_percentage_coach by the number of years
+     #df_coach_stats['win_percentage_coach'] = df_coach_stats['win_percentage_coach'] / (year - 1)
+
      # use standard scaler to scale the data
      scaler = StandardScaler()
      X_scaled = scaler.fit_transform(df_coach_stats.select_dtypes(include=[float]))
@@ -145,24 +161,6 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
     df_merged = df_merged[df_merged['year'] <= year]
     # df_merged = df_merged[df_merged['year'] >= year-4]
 
-    # df_merged['PointsPerMin'] = df_merged['Points'].div(df_merged['TotalMinutes'])
-    # df_merged['oReboundsPerMin'] = df_merged['TotaloRebounds'].div(df_merged['TotalMinutes'])
-    # df_merged['dReboundsPerMin'] = df_merged['TotaldRebounds'].div(df_merged['TotalMinutes'])
-    # df_merged['ReboundsPerMin'] = df_merged['TotalRebounds'].div(df_merged['TotalMinutes'])
-    # df_merged['AssistsPerMin'] = df_merged['TotalAssists'].div(df_merged['TotalMinutes'])
-    # df_merged['StealsPerMin'] = df_merged['TotalSteals'].div(df_merged['TotalMinutes'])
-    # df_merged['BlocksPerMin'] = df_merged['TotalBlocks'].div(df_merged['TotalMinutes'])
-    # df_merged['TurnoversPerMin'] = df_merged['TotalTurnovers'].div(df_merged['TotalMinutes'])
-    # df_merged['PFPerMin'] = df_merged['TotalPF'].div(df_merged['TotalMinutes'])
-    # df_merged['fgAttemptedPerMin'] = df_merged['TotalfgAttempted'].div(df_merged['TotalMinutes'])
-    # df_merged['fgMadePerMin'] = df_merged['TotalfgMade'].div(df_merged['TotalMinutes'])
-    # df_merged['ftAttemptedPerMin'] = df_merged['TotalftAttempted'].div(df_merged['TotalMinutes'])
-    # df_merged['ftMadePerMin'] = df_merged['TotalftMade'].div(df_merged['TotalMinutes'])
-    # df_merged['threeAttemptedPerMin'] = df_merged['TotalthreeAttempted'].div(df_merged['TotalMinutes'])
-    # df_merged['threeMadePerMin'] = df_merged['TotalthreeMade'].div(df_merged['TotalMinutes'])
-    #
-    # df_merged.fillna(0, inplace=True)
-    # Existe um problema com esta abordagem, jogadores que jogaram pouco mas bem podem ter uma vantagem ... TODO: testar com isto
     df_merged = df_merged.groupby(['playerID', 'year']).agg({
         'Points': 'sum',
         'TotalMinutes': 'sum',
@@ -237,6 +235,131 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
     # add player Id back and print the predictions for each row
     df_merged['playerID'] = players_id
     df_merged['predictions'] = y_pred
+    df_merged['medium'] = Y_
+
+    # drop all atributes exept playerID, medium and predictions
+    df_pred = df_merged[['playerID', 'medium', 'predictions']]
+
+    return df_pred
+
+
+# make a player offensive rating 
+
+def player_offensive_rating(df_merged, year=10): # note : year is the last year to count
+    
+    df_merged = df_merged[df_merged['year'] <= year]
+    # df_merged = df_merged[df_merged['year'] >= year-4]
+
+    df_merged = df_merged.groupby(['playerID', 'year']).agg({
+        'Points': 'sum',
+        'TotalMinutes': 'sum',
+        'TotaloRebounds': 'sum',
+        'TotalAssists': 'sum',
+        'TotalfgAttempted': 'sum',
+        'TotalfgMade': 'sum',
+        'TotalftAttempted': 'sum',
+        'TotalftMade': 'sum',
+        'TotalthreeAttempted': 'sum',
+        'TotalthreeMade': 'sum',
+        'TotalGP': 'sum'
+    })
+
+    df_merged = df_merged.reset_index()
+
+    # group by year and player
+    df_merged = df_merged.groupby(['playerID']).agg({
+        'Points': 'sum',
+        'TotalMinutes': 'sum',
+        'TotaloRebounds': 'sum',
+        'TotalAssists': 'sum',
+        'TotalfgAttempted': 'sum',
+        'TotalfgMade': 'sum',
+        'TotalftAttempted': 'sum',
+        'TotalftMade': 'sum',
+        'TotalthreeAttempted': 'sum',
+        'TotalthreeMade': 'sum',
+        'TotalGP': 'sum'
+    })
+    df_merged = df_merged.reset_index()
+
+    # todo: tirar de cima isto
+    df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
+
+    players_id = df_merged['playerID']
+
+    # drop all non numerical atributes
+    df_merged = df_merged.select_dtypes(include=['float64', 'int64'])
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df_merged)
+
+    df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
+
+    # TODO: make this not by year but by player years performance
+    df_merged['medium'] = df_merged.mean(axis=1)
+
+    Y_ = df_merged['medium']
+
+    # add player Id back and print the predictions for each row
+    df_merged['playerID'] = players_id
+    df_merged['predictions'] = Y_
+    df_merged['medium'] = Y_
+
+    # drop all atributes exept playerID, medium and predictions
+    df_pred = df_merged[['playerID', 'medium', 'predictions']]
+
+    return df_pred
+
+def defensive_player_ranking(df_merged, year=10): # note : year is the last year to count
+    
+    df_merged = df_merged[df_merged['year'] <= year]
+    # df_merged = df_merged[df_merged['year'] >= year-4]
+
+    df_merged = df_merged.groupby(['playerID', 'year']).agg({
+        'TotalMinutes': 'sum',
+        'TotaldRebounds': 'sum',
+        'TotalSteals': 'sum',
+        'TotalBlocks': 'sum',
+        'TotalTurnovers': 'sum',
+        'TotalPF': 'sum',
+        'TotalGP': 'sum'
+    })
+
+    df_merged = df_merged.reset_index()
+
+    # group by year and player
+    df_merged = df_merged.groupby(['playerID']).agg({
+        'TotalMinutes': 'sum',
+        'TotaldRebounds': 'sum',
+        'TotalSteals': 'sum',
+        'TotalBlocks': 'sum',
+        'TotalTurnovers': 'sum',
+        'TotalPF': 'sum',
+        'TotalGP': 'sum'
+    })
+    df_merged = df_merged.reset_index()
+
+    # todo: tirar de cima isto
+    df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
+
+    players_id = df_merged['playerID']
+
+    # drop all non numerical atributes
+    df_merged = df_merged.select_dtypes(include=['float64', 'int64'])
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df_merged)
+
+    df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
+
+    # TODO: make this not by year but by player years performance
+    df_merged['medium'] = df_merged.mean(axis=1)
+
+    Y_ = df_merged['medium']
+
+    # add player Id back and print the predictions for each row
+    df_merged['playerID'] = players_id
+    df_merged['predictions'] = Y_
     df_merged['medium'] = Y_
 
     # drop all atributes exept playerID, medium and predictions

@@ -87,9 +87,11 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     # collumn tmID and stint should be dropped
     df_players_teams = df_players_teams.drop(['tmID', 'stint'], axis=1)
 
+    df_defensive_player_stats = defensive_player_ranking(df_players_teams, year=year-1)
+    df_offensive_player_stats = player_offensive_rating(df_players_teams, year=year-1)
     df_player_ratings = player_rankings(df_merged, year=year-1)
     df_players_teams = player_in_team_by_year(df_merged)
-    df_players_teams = team_mean(df_players_teams, df_player_ratings)
+    df_players_teams = team_mean(df_players_teams, df_player_ratings, df_offensive_player_stats, df_defensive_player_stats)
 
     df_teams_merged = df_players_teams.merge(
         df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
@@ -117,7 +119,7 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
 def model_classification(df_teams_merged, year):
     # teams on year
     test = df_teams_merged[df_teams_merged['year'] == year]
-    train = df_teams_merged[df_teams_merged['year'] != year]
+    train = df_teams_merged[df_teams_merged['year'] < year]
 
     # use a MLP to predict the playoff entry
 
@@ -131,6 +133,7 @@ def model_classification(df_teams_merged, year):
             n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42),
     ]
 
+
     clf = expanding_window_decay_cross_validation(
         train.drop(['tmID'], axis=1), models[0], train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
 
@@ -141,8 +144,20 @@ def model_classification(df_teams_merged, year):
     df_teams_merged['predictions'] = 0
     df_teams_merged.loc[df_teams_merged['year'] == year, 'predictions'] = predictions
 
-    return df_teams_merged
+    return df_teams_merged, clf
 
+
+def pipeline_clf(year = 10):
+    if year > 10 or year < 2:
+        raise ValueError("Year must be between 2 and 10")
+
+    # Load the clean datasets
+    df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
+
+    df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
+                                   df_players, df_players_teams, df_coaches, df_awards_players, year)
+
+    return df_teams_merged
 
 def pipeline_year(year=10, display_results=False):
 
@@ -155,7 +170,7 @@ def pipeline_year(year=10, display_results=False):
     df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
-    df_teams_merged = model_classification(df_teams_merged, year)
+    df_teams_merged, clf = model_classification(df_teams_merged, year)
 
     # add the coach ratings to the df_teams_merged on the coachID and yeat
     # df_teams_merged = df_teams_merged.merge(
