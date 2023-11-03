@@ -243,3 +243,39 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
     df_pred = df_merged[['playerID', 'medium', 'predictions']]
 
     return df_pred
+
+
+def team_rankings(df_teams, year=10): # note : year is the last year to count
+    df_teams = df_teams[df_teams['year'] <= year] # The year results of the year can't be included
+
+    # Make a copy of the df_teams with the year, tmID, confID and playoff columns
+    df_teams_save = df_teams[['tmID', 'year', 'confID', 'playoff']]
+
+    df_teams = df_teams.drop(['confID', 'playoff'], axis=1)
+    df_teams.loc[:, 'year'] = df_teams['year'].astype(int) + 1
+
+    columns_to_standardize = ['o_oreb', 'o_dreb', 'o_pf', 'o_stl', 'o_blk', 'o_pts', \
+        'd_oreb', 'd_dreb', 'd_asts', 'd_pf', 'd_to', 'd_blk', \
+        'd_pts', 'of_goal', 'of_3pt', 'of_throw', 'of_reb', \
+        'of_assist', 'df_goal', 'df_3pt', 'df_throw', 'df_reb', 'df_steal']
+    
+
+    # Standardize some of the columns only
+    df_teams.loc[:,columns_to_standardize] = StandardScaler().fit_transform(df_teams[columns_to_standardize])
+
+    # Add columns
+    df_teams.loc[:,'team_stats'] = df_teams[columns_to_standardize].mean(axis=1).values
+
+    # Drop columns of stats
+    df_teams = df_teams.drop(columns_to_standardize, axis=1)
+
+    # Drop columns that are not needed for now, but might be used in the future if considered relevant
+    df_teams = df_teams.drop(['homeWinPercentage', 'awayWinPercentage', 'min', 'attend'], axis=1)
+
+    df_teams = df_teams_save.merge(df_teams, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
+
+    df_teams['RoundReached'] = df_teams['RoundReached'].fillna(0)
+    df_teams['winPercentage'] = df_teams['winPercentage'].fillna(0)
+    df_teams['team_stats'] = df_teams['team_stats'].fillna(0)
+
+    return df_teams

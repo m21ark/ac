@@ -91,8 +91,14 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_players_teams = player_in_team_by_year(df_merged)
     df_players_teams = team_mean(df_players_teams, df_player_ratings)
 
+    
+    # print(df_teams)
+    # df_teams = team_rankings(df_teams, year)
+
     df_teams_merged = df_players_teams.merge(
         df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
+
+    # print(df_teams_merged)
 
     # df_merged = merge_coach_info(df_teams_merged, df_coaches)
     df_coach_ratings = coach_ranking(df_coaches, year=year)
