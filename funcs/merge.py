@@ -20,7 +20,7 @@ def merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches):
         df_coach_ratings, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
     
     #fill na with 0
-    df_teams_merged = df_teams_merged.fillna(0) # default value for coach ratings is 0
+    df_teams_merged = df_teams_merged.fillna(0) 
 
 
     return df_teams_merged
