@@ -20,6 +20,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
 
+import warnings
+
+warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
+
+
 def load_data():
     # Load the clean datasets
     df_teams = pd.read_csv("dataset/cleaned/teams.csv")
