@@ -135,7 +135,7 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     return df_teams_merged
 
 
-def model_classification(df_teams_merged, year, model):
+def model_classification(df_teams_merged, year):
     # teams on year
 
     test = df_teams_merged[df_teams_merged['year'] == year]
@@ -229,16 +229,8 @@ def model_classification(df_teams_merged, year, model):
     df_teams_merged['predictions'] = 0
     df_teams_merged.loc[df_teams_merged['year'] == year, 'predictions'] = predictions
 
-    _, ea_teams, we_teams = classify_playoff_entry(
-        df_teams_merged, year)
 
-    ea_predictions = ea_teams['tmID'].unique()
-    we_predictions = we_teams['tmID'].unique()
-
-    accuracy = calculate_playoff_accuracy(
-        year, ea_predictions, we_predictions, display_results=False)
-
-    return accuracy, clf
+    return df_teams_merged, clf
 
 
 def pipeline_clf(year = 10):
