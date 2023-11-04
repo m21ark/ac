@@ -252,10 +252,7 @@ def team_rankings(df_teams, year=10): # note : year is the last year to count
     df_teams = df_teams.drop(['confID', 'playoff'], axis=1)
     df_teams.loc[:, 'year'] = df_teams['year'].astype(int) + 1
 
-    columns_to_standardize = ['o_oreb', 'o_dreb', 'o_pf', 'o_stl', 'o_blk', 'o_pts', \
-        'd_oreb', 'd_dreb', 'd_asts', 'd_pf', 'd_to', 'd_blk', \
-        'd_pts', 'of_goal', 'of_3pt', 'of_throw', 'of_reb', \
-        'of_assist', 'df_goal', 'df_3pt', 'df_throw', 'df_reb', 'df_steal']
+    columns_to_standardize = ['attend']
     
 
     # Standardize some of the columns only
@@ -268,7 +265,7 @@ def team_rankings(df_teams, year=10): # note : year is the last year to count
     df_teams = df_teams.drop(columns_to_standardize, axis=1)
 
     # Drop columns that are not needed for now, but might be used in the future if considered relevant
-    df_teams = df_teams.drop(['homeWinPercentage', 'awayWinPercentage', 'min', 'attend'], axis=1)
+    df_teams = df_teams.drop(['homeWinPercentage', 'awayWinPercentage', 'min'], axis=1)
 
     df_teams = df_teams_save.merge(df_teams, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
 

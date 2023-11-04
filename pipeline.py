@@ -11,6 +11,15 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
+
 import warnings
 
 warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
@@ -99,10 +108,10 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
 
     
     # print(df_teams)
-    # df_teams = team_rankings(df_teams, year)
+    df_teams = team_rankings(df_teams, year)
 
     df_teams_merged = df_players_teams.merge(
-        df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
+        df_teams[['tmID', 'year', 'confID', 'playoff', 'team_stats']], on=['tmID', 'year'], how='left')
 
     # print(df_teams_merged)
 
@@ -118,7 +127,7 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
 
-    df_teams_merged = merge_add_awards(
+    df_teams_merged = merge_add_awards( 
         df_teams_merged, df_players, df_coaches, year)
 
     df_teams_merged = df_teams_merged.drop(['coachID', 'playerID'], axis=1)
@@ -137,6 +146,68 @@ def model_classification(df_teams_merged, year, model):
     # convert the confID to a number
     train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
     test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
+
+    models = [
+        lambda: RandomForestClassifier(n_estimators=100, random_state=42),
+        lambda: GradientBoostingClassifier(
+            n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42),
+    ]
+
+    # param_grids = [
+    # {
+    #     'n_estimators': [100, 200, 300],
+    #     'max_depth': [5, 10, None],
+    #     'min_samples_split': [2, 5, 10],
+    #     'random_state': [42]
+    # },
+    # {
+    #     'C': [1.0, 0.1, 0.01],
+    #     'kernel': ['rbf', 'linear'],
+    #     'probability': [True]
+    # },
+    # {},
+    # {
+    #     'n_neighbors': [5, 10, 15],
+    #     'weights': ['uniform', 'distance']
+    # },
+    # {
+    #     'max_depth': [5, 10, 15],
+    #     'min_samples_split': [2, 5, 10],
+    #     'random_state': [42]
+    # },
+    # {
+    #     'n_estimators': [100, 200, 300],
+    #     'learning_rate': [0.1, 0.01, 0.001],
+    #     'max_depth': [3, 5, 7],
+    #     'random_state': [42]
+    # },
+    # {
+    #     'hidden_layer_sizes': [(100, 50), (200, 100), (300, 150)],
+    #     'max_iter': [1000, 2000, 3000],
+    #     'random_state': [42]
+    # }
+    # ]
+
+    # # Create the list of models
+    # models = [
+    #     RandomForestClassifier(),
+    #     SVC(probability=True),
+    #     GaussianNB(),
+    #     KNeighborsClassifier(),
+    #     DecisionTreeClassifier(),
+    #     GradientBoostingClassifier(),
+    #     MLPClassifier()
+    # ]
+
+    # grid_search_results = []
+
+    # # Perform grid search for each model
+    # for model, param_grid in zip(models, param_grids):
+    #     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+    #     grid_search.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])  # Replace X and y with your data
+    #     grid_search_results.append(grid_search)
+
+
 
     clf = expanding_window_decay_cross_validation(
         train.drop(['tmID'], axis=1), model, train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
