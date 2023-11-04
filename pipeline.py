@@ -126,8 +126,9 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     return df_teams_merged
 
 
-def model_classification(df_teams_merged, year):
+def model_classification(df_teams_merged, year, model):
     # teams on year
+
     test = df_teams_merged[df_teams_merged['year'] == year]
     train = df_teams_merged[df_teams_merged['year'] < year]
 
@@ -137,15 +138,8 @@ def model_classification(df_teams_merged, year):
     train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
     test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
 
-    models = [
-        lambda: RandomForestClassifier(n_estimators=100, random_state=42),
-        lambda: GradientBoostingClassifier(
-            n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42),
-    ]
-
-
     clf = expanding_window_decay_cross_validation(
-        train.drop(['tmID'], axis=1), models[0], train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
+        train.drop(['tmID'], axis=1), model, train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
 
     clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
     predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
@@ -154,7 +148,16 @@ def model_classification(df_teams_merged, year):
     df_teams_merged['predictions'] = 0
     df_teams_merged.loc[df_teams_merged['year'] == year, 'predictions'] = predictions
 
-    return df_teams_merged, clf
+    _, ea_teams, we_teams = classify_playoff_entry(
+        df_teams_merged, year)
+
+    ea_predictions = ea_teams['tmID'].unique()
+    we_predictions = we_teams['tmID'].unique()
+
+    accuracy = calculate_playoff_accuracy(
+        year, ea_predictions, we_predictions, display_results=False)
+
+    return accuracy, clf
 
 
 def pipeline_clf(year = 10):
