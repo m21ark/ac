@@ -11,6 +11,10 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
+import warnings
+
+warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
+
 
 def load_data():
     # Load the clean datasets
