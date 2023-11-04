@@ -187,7 +187,7 @@ def model_classification(df_teams_merged, year):
     # }
     # ]
 
-    # # Create the list of models
+    # Create the list of models
     # models = [
     #     RandomForestClassifier(),
     #     SVC(probability=True),
@@ -199,18 +199,28 @@ def model_classification(df_teams_merged, year):
     # ]
 
     # grid_search_results = []
+    # best_model = None
+    # best_score = 0
 
     # # Perform grid search for each model
     # for model, param_grid in zip(models, param_grids):
     #     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
     #     grid_search.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])  # Replace X and y with your data
     #     grid_search_results.append(grid_search)
+    #     if grid_search.best_score_ > best_score:
+    #         best_score = grid_search.best_score_
+    #         best_model = grid_search.best_estimator_
 
+    # for model, grid_search_result in zip(models, grid_search_results):
+    #     print(f"Best parameters for {model.__class__.__name__}: {grid_search_result.best_params_}")
+    #     print(f"Best score for {model.__class__.__name__}: {grid_search_result.best_score_}")
 
+    
 
     clf = expanding_window_decay_cross_validation(
         train.drop(['tmID'], axis=1), models[0], train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
-
+    #clf = best_model
+    
     clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
     predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
 
@@ -222,7 +232,7 @@ def model_classification(df_teams_merged, year):
 
 
 def pipeline_clf(year = 10):
-    if year > 10 or year < 2:
+    if year > 10 or year < 1:
         raise ValueError("Year must be between 2 and 10")
 
     # Load the clean datasets
