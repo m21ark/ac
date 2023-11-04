@@ -101,10 +101,9 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
         print(f"{'Total recall:':<20}{total_recall:.2f}%\n")
         print(f"{'Total f1:':<20}{total_f1:.2f}%\n")
 
-    # display confusion matrix
-    cm = np.array([[TP, FP], [FN, TN]])
-    display_confusionMatrix(cm)
-    
+        # display confusion matrix
+        cm = np.array([[TP, FP], [FN, TN]])
+        display_confusionMatrix(cm)
 
     return total_accuracy
 
