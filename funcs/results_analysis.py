@@ -1,6 +1,8 @@
+import itertools
 from colorama import Fore, Style
 import pandas
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
@@ -63,8 +65,23 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
 
     we_correct_count = len(we_correct)
     ea_correct_count = len(ea_correct)
+    we_incorrect_count = len(we_incorrect)
+    ea_incorrect_count = len(ea_incorrect)
+    all_we_count = len(all_we_teams)
+    all_ea_count = len(all_ea_teams)
 
-    total_accuracy = ((we_correct_count + ea_correct_count) / 8.0) * 100
+    TP = we_correct_count + ea_correct_count
+    FP = we_incorrect_count + ea_incorrect_count
+    FN = FP
+    TN = (all_we_count + all_ea_count) - TP - FN - FP 
+
+    total_accuracy = ((TP + TN) / (TP + TN + FP + FN)) * 100
+    total_precision = (TP / (TP + FP)) * 100
+    total_recall = (TP / (TP + FN)) * 100
+    total_f1 = (2 * total_precision * total_recall) / (total_precision + total_recall)
+
+    # total_accuracy = ((we_correct_count + ea_correct_count) / 8.0) * 100
+
 
     if display_results:
         print("\n")
@@ -80,9 +97,36 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
         print(f"{'Missed:':<15}{', '.join(set(actual_ea_playoffs) - set(ea_correct))}")
         print("=" * 40)
         print(f"{'Total accuracy:':<20}{total_accuracy:.2f}%\n")
+        print(f"{'Total precision:':<20}{total_precision:.2f}%\n")
+        print(f"{'Total recall:':<20}{total_recall:.2f}%\n")
+        print(f"{'Total f1:':<20}{total_f1:.2f}%\n")
+
+        # display confusion matrix
+        cm = np.array([[TP, FP], [FN, TN]])
+        display_confusionMatrix(cm)
 
     return total_accuracy
 
+def display_confusionMatrix(cm):
+    classes = ['Playoff', 'Eliminated']
+    plt.matshow(cm)
+    plt.suptitle('Confusion matrix')
+    total = sum(sum(cm))
+    plt.title('Total cases: {}'.format(total))
+    plt.colorbar()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes)
+    plt.yticks(tick_marks, classes)
+
+    for i in range(len(classes)):
+        for j in range(len(classes)):
+            perc = round(cm[i, j] / total * 100, 1)
+            plt.text(j, i, f"{format(cm[i, j], '.0f')} : {perc}%", horizontalalignment="center",
+                     color="black" if cm[i, j] > cm.max() / 2 else "white")
+
+    plt.show()
 
 def remove_currently_unknown_data(df_teams, year):
     # Remove all columns that are unknown at the start of the season on a given year
