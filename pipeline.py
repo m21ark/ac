@@ -106,6 +106,34 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_players_teams = player_in_team_by_year(df_merged)
     df_players_teams = team_mean(df_players_teams, df_player_ratings, df_offensive_player_stats, df_defensive_player_stats)
 
+    # use add_player_stats and add all information to df_players_teams
+    df_players_stats = add_player_stats(df_merged, year=year-1)
+
+    # print(df_players_stats)
+    # df_players_teams join with df_players_stats and group by tmID and year
+    df_players_teams = df_players_teams.merge( df_players_stats, on=['tmID', 'year'], how='left')
+
+    df_players_teams = df_players_teams.drop(['playerID_x'], axis=1)
+    # group by tmID and year 
+    df_players_teams = df_players_teams.groupby(['tmID', 'year']).agg(
+        {
+        'Points': 'mean',
+        'TotaloRebounds': 'mean',
+        'TotaldRebounds': 'mean',
+        'TotalAssists': 'mean',
+        'TotalSteals': 'mean',
+        'TotalBlocks': 'mean',
+        'TotalTurnovers': 'mean',
+        'TotalPF': 'mean',
+        'TotalfgMade': 'mean',
+        'TotalftMade': 'mean',
+        'TotalthreeMade': 'mean',
+    }
+    ).reset_index()
+
+    print(df_players_teams) 
+    
+
     
     # print(df_teams)
     df_teams = team_rankings(df_teams, year)
@@ -127,15 +155,16 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
 
-    df_teams_merged = merge_add_awards( 
-        df_teams_merged, df_players, df_coaches, year)
+    #df_teams_merged = merge_add_awards( 
+    #    df_teams_merged, df_players, df_coaches, year)
 
-    df_teams_merged = df_teams_merged.drop(['coachID', 'playerID'], axis=1)
+    df_teams_merged = df_teams_merged.drop(['coachID'], axis=1)
+    # df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
 
     return df_teams_merged
 
 
-def model_classification(df_teams_merged, year):
+def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42)):
     # teams on year
 
     test = df_teams_merged[df_teams_merged['year'] == year]
@@ -146,12 +175,6 @@ def model_classification(df_teams_merged, year):
     # convert the confID to a number
     train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
     test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
-
-    models = [
-        lambda: RandomForestClassifier(n_estimators=100, random_state=42),
-        lambda: GradientBoostingClassifier(
-            n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42),
-    ]
 
     # param_grids = [
     # {
@@ -219,7 +242,7 @@ def model_classification(df_teams_merged, year):
     
 
     clf = expanding_window_decay_cross_validation(
-        train.drop(['tmID'], axis=1), models[0], train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
+        train.drop(['tmID'], axis=1), model, train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
     #clf = best_model
     
     clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
@@ -245,10 +268,10 @@ def pipeline_clf(year = 10):
 
     return df_teams_merged
 
-def pipeline_year(year=10, display_results=False):
+def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=100, random_state=42),  display_results=False):
 
-    if year > 10 or year < 2:
-        raise ValueError("Year must be between 2 and 10")
+    if year > 11 or year < 2:
+        raise ValueError("Year must be between 2 and 11")
 
     # Load the clean datasets
     df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
@@ -256,7 +279,7 @@ def pipeline_year(year=10, display_results=False):
     df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
-    df_teams_merged, clf = model_classification(df_teams_merged, year)
+    df_teams_merged, clf = model_classification(df_teams_merged, year, model=model)
 
     # add the coach ratings to the df_teams_merged on the coachID and yeat
     # df_teams_merged = df_teams_merged.merge(
@@ -268,10 +291,10 @@ def pipeline_year(year=10, display_results=False):
     ea_predictions = ea_teams['tmID'].unique()
     we_predictions = we_teams['tmID'].unique()
 
-    accuracy = calculate_playoff_accuracy(
+    total_precision = calculate_playoff_accuracy(
         year, ea_predictions, we_predictions, display_results)
 
-    return accuracy
+    return total_precision
 
 
 def check_accuracy_by_year():

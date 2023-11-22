@@ -58,8 +58,8 @@ def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive
         mean_d.append(top_12_defensive_players['predictions'].mean())
 
     #df_players_teams['mean'] = mean_l
-    df_players_teams['offensive_strength'] = mean_o
-    df_players_teams['defensive_strength'] = mean_d
+    #df_players_teams['offensive_strength'] = mean_o
+    #df_players_teams['defensive_strength'] = mean_d
     return df_players_teams
 
 
@@ -340,6 +340,51 @@ def player_offensive_rating(df_merged, year=10): # note : year is the last year 
     df_pred = df_merged[['playerID', 'medium', 'predictions']]
 
     return df_pred
+
+def add_player_stats(df_merged, year = 10):
+    df_merged = df_merged[df_merged['year'] <= year]
+    # df_merged = df_merged[df_merged['year'] >= year-4]
+
+    df_merged = df_merged.groupby(['playerID', 'year', 'tmID']).agg({
+        'Points': 'mean',
+        'TotaloRebounds': 'mean',
+        'TotaldRebounds': 'mean',
+        'TotalAssists': 'mean',
+        'TotalSteals': 'mean',
+        'TotalBlocks': 'mean',
+        'TotalTurnovers': 'mean',
+        'TotalPF': 'mean',
+        'TotalfgMade': 'mean',
+        'TotalftMade': 'mean',
+        'TotalthreeMade': 'mean',
+    })
+
+    df_merged = df_merged.reset_index()
+
+    # group by year and player
+    # df_merged = df_merged.groupby(['playerID']).agg({
+        # 'Points': 'mean',
+        # 'TotalMinutes': 'mean',
+        # 'TotaloRebounds': 'mean',
+        # 'TotaldRebounds': 'mean',
+        # 'TotalRebounds': 'mean',
+        # 'TotalAssists': 'mean',
+        # 'TotalSteals': 'mean',
+        # 'TotalBlocks': 'mean',
+        # 'TotalTurnovers': 'mean',
+        # 'TotalPF': 'mean',
+        # 'TotalfgAttempted': 'mean',
+        # 'TotalfgMade': 'mean',
+        # 'TotalftAttempted': 'mean',
+        # 'TotalftMade': 'mean',
+        # 'TotalthreeAttempted': 'mean',
+        # 'TotalthreeMade': 'mean',
+        # 'TotalGP': 'mean'
+    # })
+    # df_merged = df_merged.reset_index()
+
+    return df_merged
+
 
 def defensive_player_ranking(df_merged, year=10): # note : year is the last year to count
     

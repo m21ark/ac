@@ -96,16 +96,16 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
         print(f"{'Guesses:':<15}{color_text(ea_correct, actual_ea_playoffs) + ', ' + color_text(ea_incorrect, actual_ea_playoffs)}")
         print(f"{'Missed:':<15}{', '.join(set(actual_ea_playoffs) - set(ea_correct))}")
         print("=" * 40)
-        print(f"{'Total accuracy:':<20}{total_accuracy:.2f}%\n")
-        print(f"{'Total precision:':<20}{total_precision:.2f}%\n")
-        print(f"{'Total recall:':<20}{total_recall:.2f}%\n")
+        print(f"{'Total accuracy:':<20}{total_accuracy:.2f}%")
+        print(f"{'Total precision:':<20}{total_precision:.2f}%")
+        print(f"{'Total recall:':<20}{total_recall:.2f}%")
         print(f"{'Total f1:':<20}{total_f1:.2f}%\n")
 
         # display confusion matrix
         cm = np.array([[TP, FP], [FN, TN]])
         display_confusionMatrix(cm)
 
-    return total_accuracy
+    return total_precision
 
 def display_confusionMatrix(cm):
     classes = ['Playoff', 'Eliminated']
