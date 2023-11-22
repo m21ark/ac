@@ -16,8 +16,11 @@ def merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches):
     df_coach_ratings = df_coach_ratings.merge(
         df_coaches, left_on=['coachID'],right_on=['coachID'], how="right")
 
+
     df_teams_merged = df_teams_merged.merge(
         df_coach_ratings, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
+    
+    print(df_teams_merged[df_teams_merged['year'] == 11])
     
     #fill na with 0
     df_teams_merged = df_teams_merged.fillna(0) 

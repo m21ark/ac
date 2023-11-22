@@ -136,21 +136,23 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
 
     
     # print(df_teams)
-    df_teams = team_rankings(df_teams, year)
+    #df_teams = team_rankings(df_teams, year)
 
     df_teams_merged = df_players_teams.merge(
-        df_teams[['tmID', 'year', 'confID', 'playoff', 'team_stats']], on=['tmID', 'year'], how='left')
+        df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
 
-    # print(df_teams_merged)
 
     # df_merged = merge_coach_info(df_teams_merged, df_coaches)
     df_coach_ratings = coach_ranking(df_coaches, year=year)
+
 
     # df_coaches = df_coaches.rename(columns={'bioID': 'coachID'})
     # print (df_teams_merged)
 
     df_teams_merged = merge_coach_info(
         df_teams_merged, df_coach_ratings, df_coaches)
+    
+    
 
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
@@ -160,6 +162,9 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
 
     df_teams_merged = df_teams_merged.drop(['coachID'], axis=1)
     df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
+
+    
+
 
     return df_teams_merged
 
@@ -276,18 +281,19 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
     # Load the clean datasets
     df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
 
+
     df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
+    
     df_teams_merged, clf = model_classification(df_teams_merged, year, model=model)
 
     # add the coach ratings to the df_teams_merged on the coachID and yeat
     # df_teams_merged = df_teams_merged.merge(
     #   df_coach_ratings, on=['coachID'], how='left')
 
-    print("here")
     # print year 11
-    print(df_teams_merged[df_teams_merged['year'] == 11])
+    # print(df_teams_merged[df_teams_merged['year'] == 11])
 
 
     df_teams, ea_teams, we_teams = classify_playoff_entry(

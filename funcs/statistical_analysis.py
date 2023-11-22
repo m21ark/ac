@@ -20,8 +20,7 @@ def classify_playoff_entry(df_teams, year):
     ea_playoff_teams = ea_conf.head(4)
     we_playoff_teams = we_conf.head(4)
 
-    # print(ea_playoff_teams)
-    # print(we_playoff_teams)
+    
 
     for _, row in ea_playoff_teams.iterrows():
         row['playoff'] = 'Y'
@@ -243,8 +242,8 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
     return df_pred
 
 
-def team_rankings(df_teams, year=10): # note : year is the last year to count
-    df_teams = df_teams[df_teams['year'] <= year] # The year results of the year can't be included
+def team_rankings(df_teams, year=10): 
+    df_teams = df_teams[df_teams['year'] < year] # The year results of the year can't be included
 
     # Make a copy of the df_teams with the year, tmID, confID and playoff columns
     df_teams_save = df_teams[['tmID', 'year', 'confID', 'playoff']]
