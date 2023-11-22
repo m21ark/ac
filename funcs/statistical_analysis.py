@@ -15,6 +15,9 @@ def classify_playoff_entry(df_teams, year):
     ea_conf = ea_conf.sort_values(by=['predictions'], ascending=False)
     we_conf = we_conf.sort_values(by=['predictions'], ascending=False)
 
+    print(ea_conf)
+    print(we_conf)
+
     df_teams['playoff'] = "N"
 
     ea_playoff_teams = ea_conf.head(4)

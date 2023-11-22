@@ -20,8 +20,6 @@ def merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches):
     df_teams_merged = df_teams_merged.merge(
         df_coach_ratings, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
     
-    print(df_teams_merged[df_teams_merged['year'] == 11])
-    
     #fill na with 0
     df_teams_merged = df_teams_merged.fillna(0) 
 
@@ -67,6 +65,11 @@ def merge_add_awards(df_teams_merged, df_players, df_coaches, year):
             df_player = df_players[df_players['bioID'] == i]
             award = df_player['award'].values[0]
             df_teams_merged.at[index, 'awards'] += award
+
+    ## standardize the awards
+    df_teams_merged['awards'] = df_teams_merged['awards'] / \
+        df_teams_merged['awards'].max()
+    
     
     # # for every coach in df_teams_merged coachID add the award of that coach
    
