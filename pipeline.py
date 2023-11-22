@@ -107,31 +107,31 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_players_teams = team_mean(df_players_teams, df_player_ratings, df_offensive_player_stats, df_defensive_player_stats)
 
     # use add_player_stats and add all information to df_players_teams
-    df_players_stats = add_player_stats(df_merged, year=year-1)
+    #df_players_stats = add_player_stats(df_merged, year=year-1)
 
     # print(df_players_stats)
     # df_players_teams join with df_players_stats and group by tmID and year
-    df_players_teams = df_players_teams.merge( df_players_stats, on=['tmID', 'year'], how='left')
+    # df_players_teams = df_players_teams.merge( df_players_stats, on=['tmID', 'year'], how='left')
 
-    df_players_teams = df_players_teams.drop(['playerID_x'], axis=1)
+    #df_players_teams = df_players_teams.drop(['playerID_x'], axis=1)
     # group by tmID and year 
-    df_players_teams = df_players_teams.groupby(['tmID', 'year']).agg(
-        {
-        'Points': 'mean',
-        'TotaloRebounds': 'mean',
-        'TotaldRebounds': 'mean',
-        'TotalAssists': 'mean',
-        'TotalSteals': 'mean',
-        'TotalBlocks': 'mean',
-        'TotalTurnovers': 'mean',
-        'TotalPF': 'mean',
-        'TotalfgMade': 'mean',
-        'TotalftMade': 'mean',
-        'TotalthreeMade': 'mean',
-    }
-    ).reset_index()
+    #df_players_teams = df_players_teams.groupby(['tmID', 'year']).agg(
+    #     {
+    #     'Points': 'mean',
+    #     'TotaloRebounds': 'mean',
+    #     'TotaldRebounds': 'mean',
+    #     'TotalAssists': 'mean',
+    #     'TotalSteals': 'mean',
+    #     'TotalBlocks': 'mean',
+    #     'TotalTurnovers': 'mean',
+    #     'TotalPF': 'mean',
+    #     'TotalfgMade': 'mean',
+    #     'TotalftMade': 'mean',
+    #     'TotalthreeMade': 'mean',
+    # }
+    # ).reset_index()
 
-    print(df_players_teams) 
+    # print(df_players_teams) 
     
 
     
@@ -155,11 +155,11 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
 
-    #df_teams_merged = merge_add_awards( 
-    #    df_teams_merged, df_players, df_coaches, year)
+    df_teams_merged = merge_add_awards( 
+        df_teams_merged, df_players, df_coaches, year)
 
     df_teams_merged = df_teams_merged.drop(['coachID'], axis=1)
-    # df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
+    df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
 
     return df_teams_merged
 
@@ -285,11 +285,17 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
     # df_teams_merged = df_teams_merged.merge(
     #   df_coach_ratings, on=['coachID'], how='left')
 
+    print("here")
+    # print year 11
+    print(df_teams_merged[df_teams_merged['year'] == 11])
+
+
     df_teams, ea_teams, we_teams = classify_playoff_entry(
         df_teams_merged, year)
 
     ea_predictions = ea_teams['tmID'].unique()
     we_predictions = we_teams['tmID'].unique()
+    
 
     total_precision = calculate_playoff_accuracy(
         year, ea_predictions, we_predictions, display_results)
