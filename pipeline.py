@@ -19,6 +19,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
+import lightgbm as lgb
 
 import warnings
 
@@ -169,7 +170,7 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     return df_teams_merged
 
 
-def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42), grid=False, parameters={}):
+def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42), grid=False, parameters={}, lightGBM=False):
     # teams on year
 
     test = df_teams_merged[df_teams_merged['year'] == year]
@@ -189,12 +190,30 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
         print(f"Best score for {grid_search.best_estimator_.__class__.__name__}: {grid_search.best_score_}")
         model = lambda: grid_search.best_estimator_
 
-    clf = expanding_window_decay_cross_validation(
-        train.drop(['tmID'], axis=1), model, train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
+    predictions = []
     
+    if not lightGBM:
+        clf = expanding_window_decay_cross_validation(
+            train.drop(['tmID'], axis=1), model, train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
+        #clf = best_model
     
-    clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
-    predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
+        clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
+        predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
+    else:
+        test = lgb.Dataset(test.drop(['playoff', 'year', 'tmID'], axis=1), label=test['playoff'])
+        train = lgb.Dataset(train.drop(['playoff', 'year', 'tmID'], axis=1), label=train['playoff'])
+        params = {
+        'objective': 'binary',  # 'binary' for binary classification
+        'metric': 'binary_error',  # Evaluation metric
+        'boosting_type': 'gbdt',  # Gradient Boosting Decision Tree
+        'num_leaves': 31,
+        'learning_rate': 0.05,
+        'feature_fraction': 0.9,
+        }
+
+        num_round = 100  # Number of boosting rounds
+        model = lgb.train(params, train, num_round, valid_sets=[test], early_stopping_rounds=10)
+        predictions = model.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))
 
     test['predictions'] = predictions
     df_teams_merged['predictions'] = 0
@@ -216,7 +235,7 @@ def pipeline_clf(year = 10):
 
     return df_teams_merged
 
-def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=100, random_state=42),  display_results=False):
+def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=100, random_state=42),  display_results=False, lightGBM=False):
 
     if year > 11 or year < 2:
         raise ValueError("Year must be between 2 and 11")
@@ -228,8 +247,22 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
     df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
-    
+    # if (lightGBM):
     df_teams_merged, clf = model_classification(df_teams_merged, year, model=model)
+    # else:
+    #     train = df_teams_merged[df_teams_merged['year'] < year]
+    #     test = df_teams_post[df_teams_post['year'] == year]
+    #     train = lgb.Dataset(train.drop(['playoff', 'year', 'tmID'], axis=1), label=train['playoff'])
+    #     params = {
+    #     'objective': 'binary',  # 'binary' for binary classification
+    #     'metric': 'binary_error',  # Evaluation metric
+    #     'boosting_type': 'gbdt',  # Gradient Boosting Decision Tree
+    #     'num_leaves': 31,
+    #     'learning_rate': 0.05,
+    #     'feature_fraction': 0.9,
+    #     }
+
+
 
     # add the coach ratings to the df_teams_merged on the coachID and yeat
     # df_teams_merged = df_teams_merged.merge(
