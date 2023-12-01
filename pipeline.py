@@ -170,7 +170,7 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     return df_teams_merged
 
 
-def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42), lightGBM=False):
+def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42), grid=False, parameters={}, lightGBM=False):
     # teams on year
 
     test = df_teams_merged[df_teams_merged['year'] == year]
@@ -182,68 +182,13 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
     train['confID'] = train['confID'].replace(['EA', 'WE'], [0, 1])
     test['confID'] = test['confID'].replace(['EA', 'WE'], [0, 1])
 
-    # param_grids = [
-    # {
-    #     'n_estimators': [100, 200, 300],
-    #     'max_depth': [5, 10, None],
-    #     'min_samples_split': [2, 5, 10],
-    #     'random_state': [42]
-    # },
-    # {
-    #     'C': [1.0, 0.1, 0.01],
-    #     'kernel': ['rbf', 'linear'],
-    #     'probability': [True]
-    # },
-    # {},
-    # {
-    #     'n_neighbors': [5, 10, 15],
-    #     'weights': ['uniform', 'distance']
-    # },
-    # {
-    #     'max_depth': [5, 10, 15],
-    #     'min_samples_split': [2, 5, 10],
-    #     'random_state': [42]
-    # },
-    # {
-    #     'n_estimators': [100, 200, 300],
-    #     'learning_rate': [0.1, 0.01, 0.001],
-    #     'max_depth': [3, 5, 7],
-    #     'random_state': [42]
-    # },
-    # {
-    #     'hidden_layer_sizes': [(100, 50), (200, 100), (300, 150)],
-    #     'max_iter': [1000, 2000, 3000],
-    #     'random_state': [42]
-    # }
-    # ]
+    if grid:
+        grid_search = GridSearchCV(model(), parameters, cv=5, scoring='accuracy', n_jobs=-1)
+        grid_search.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])  # Replace X and y with your data
 
-    # Create the list of models
-    # models = [
-    #     RandomForestClassifier(),
-    #     SVC(probability=True),
-    #     GaussianNB(),
-    #     KNeighborsClassifier(),
-    #     DecisionTreeClassifier(),
-    #     GradientBoostingClassifier(),
-    #     MLPClassifier()
-    # ]
-
-    # grid_search_results = []
-    # best_model = None
-    # best_score = 0
-
-    # # Perform grid search for each model
-    # for model, param_grid in zip(models, param_grids):
-    #     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
-    #     grid_search.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])  # Replace X and y with your data
-    #     grid_search_results.append(grid_search)
-    #     if grid_search.best_score_ > best_score:
-    #         best_score = grid_search.best_score_
-    #         best_model = grid_search.best_estimator_
-
-    # for model, grid_search_result in zip(models, grid_search_results):
-    #     print(f"Best parameters for {model.__class__.__name__}: {grid_search_result.best_params_}")
-    #     print(f"Best score for {model.__class__.__name__}: {grid_search_result.best_score_}")
+        print(f"Best parameters for {grid_search.best_estimator_.__class__.__name__}: {grid_search.best_params_}")
+        print(f"Best score for {grid_search.best_estimator_.__class__.__name__}: {grid_search.best_score_}")
+        model = lambda: grid_search.best_estimator_
 
     predictions = []
     
@@ -276,7 +221,6 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
         num_round = 100  # Number of boosting rounds
         model = lgb.train(params, train, num_round, valid_sets=[test], early_stopping_rounds=10)
         predictions = model.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))
-
 
     test['predictions'] = predictions
     df_teams_merged['predictions'] = 0
@@ -346,6 +290,31 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
         year, ea_predictions, we_predictions, display_results)
 
     return total_precision
+
+def pipeline_year_grid_search(year=10, model = lambda: RandomForestClassifier(), parameters={}, display_results=False):
+
+    if year > 11 or year < 2:
+        raise ValueError("Year must be between 2 and 11")
+    
+    # Load the clean datasets
+    df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
+
+
+    df_teams_merged = global_merge(df_teams, df_teams_post, df_series_post,
+                                   df_players, df_players_teams, df_coaches, df_awards_players, year)
+
+    
+    df_teams_merged, clf = model_classification(df_teams_merged, year, model=model, grid=True, parameters=parameters)
+
+    df_teams, ea_teams, we_teams = classify_playoff_entry(df_teams_merged, year)
+
+    ea_predictions = ea_teams['tmID'].unique()
+    we_predictions = we_teams['tmID'].unique()
+
+    total_precision = calculate_playoff_accuracy(year, ea_predictions, we_predictions, display_results)
+
+    return total_precision
+
 
 
 def check_accuracy_by_year():
