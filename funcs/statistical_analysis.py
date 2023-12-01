@@ -42,6 +42,7 @@ def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive
     mean_l = []
     mean_o = []
     mean_d = []
+
     for i in df_players_teams['playerID']:
         # get the 12 best players from the team
         top_12_players = df_pred[df_pred['playerID'].isin(i)].sort_values(by=['predictions'], ascending=False).head(12)
@@ -59,7 +60,29 @@ def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive
         
         mean_d.append(top_12_defensive_players['predictions'].mean())
 
-    #df_players_teams['mean'] = mean_l
+    # mean_l_divi = [0 for _ in range(len(mean_l))]
+    # # # for each mean calculate the difference between this year mean and the last year mean
+    # for i in range(len(mean_l)):
+    #     if i == 1:
+    #         mean_l_divi[i] = 0
+    #     else:
+    #         mean_l_divi[i] = mean_l[i] - mean_l[i-1]
+
+    # df_players_teams['mean_diviation'] = mean_l_divi
+    # df_players_teams['mean'] = mean_l
+
+    
+
+    # for each team calculate the difference between this year teams mean and the last year mean
+    # for team in df_players_teams['tmID'].unique():
+        # for year in df_players_teams[df_players_teams['tmID'] == team]['year'].unique():
+            # if year == 0:
+                # df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean_diviation'] = 0
+            # else:
+                # df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean_diviation'] = df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean'] - df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year-1), 'mean']
+
+
+
     df_players_teams['offensive_strength'] = mean_o
     df_players_teams['defensive_strength'] = mean_d
     return df_players_teams

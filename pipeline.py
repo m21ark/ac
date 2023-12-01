@@ -165,7 +165,7 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
 
     
-
+    # df_teams_merged = df_teams_merged.drop(['awards'], axis=1)
 
     return df_teams_merged
 
@@ -248,6 +248,13 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
     predictions = []
     
     if not lightGBM:
+
+        ## normalize the data
+        #scaler = StandardScaler()
+        #scaler.fit(train.drop(['playoff', 'year', 'tmID'], axis=1))
+        #train = scaler.transform(train.drop(['playoff', 'year', 'tmID'], axis=1))
+        #test = scaler.transform(test.drop(['playoff', 'year', 'tmID'], axis=1))
+
         clf = expanding_window_decay_cross_validation(
             train.drop(['tmID'], axis=1), model, train.drop(['playoff', 'year', 'tmID'], axis=1).columns, year)
         #clf = best_model
@@ -280,8 +287,8 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
 
 
 def pipeline_clf(year = 10):
-    if year > 10 or year < 1:
-        raise ValueError("Year must be between 2 and 10")
+    if year > 11 or year < 1:
+        raise ValueError("Year must be between 2 and 11")
 
     # Load the clean datasets
     df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players = load_data()
