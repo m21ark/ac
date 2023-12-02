@@ -25,9 +25,8 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
 
-
+# Load the clean datasets
 def load_data():
-    # Load the clean datasets
     df_teams = pd.read_csv("dataset/cleaned/teams.csv")
     df_teams_post = pd.read_csv("dataset/cleaned/teams_post.csv")
     df_series_post = pd.read_csv("dataset/cleaned/series_post.csv")
@@ -38,10 +37,8 @@ def load_data():
 
     return [df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players]
 
-
+# Loading Original DataFrames
 def apply_cleaning():
-
-    # Loading Original DataFrames
     df_teams = pd.read_csv("dataset/original/teams.csv")
     df_teams_post = pd.read_csv("dataset/original/teams_post.csv")
     df_series_post = pd.read_csv("dataset/original/series_post.csv")
@@ -68,7 +65,7 @@ def apply_cleaning():
     df_teams_post.to_csv("dataset/cleaned/teams_post.csv", index=False)
     df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
 
-
+# Applies the model to the data using an expanding window logic with decay
 def expanding_window_decay_cross_validation(data, model_func, features, year, decay_rate=0.5):
     clf = model_func()
 
@@ -90,7 +87,7 @@ def expanding_window_decay_cross_validation(data, model_func, features, year, de
 
     return clf
 
-
+# Joins all the used dataframes into one
 def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players, year):
 
     df_awards_players, df_awards_coaches = separate_awards_info(
@@ -159,9 +156,8 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
 
     return df_teams_merged
 
-
+# Splits the data into test/train and applies the model
 def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42), grid=False, parameters={}, lightGBM=False):
-    # teams on year
 
     test = df_teams_merged[df_teams_merged['year'] == year]
     train = df_teams_merged[df_teams_merged['year'] < year]
@@ -232,6 +228,7 @@ def pipeline_clf(year = 10):
 
     return df_teams_merged
 
+# Function that runs the pipeline for a given year
 def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=100, random_state=42),  display_results=False, lightGBM=False):
 
     if year > 11 or year < 2:
@@ -281,6 +278,7 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
 
     return total_precision
 
+# Function that runs the pipeline for a given year using grid search
 def pipeline_year_grid_search(year=10, model = lambda: RandomForestClassifier(), parameters={}, display_results=False):
 
     if year > 11 or year < 2:
@@ -306,7 +304,7 @@ def pipeline_year_grid_search(year=10, model = lambda: RandomForestClassifier(),
     return total_precision
 
 
-
+# Function that plots the results of the pipeline for a certain year range
 def check_accuracy_by_year():
     accs = []
     years = list(range(2, 11))
