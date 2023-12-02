@@ -38,7 +38,7 @@ def player_in_team_by_year(df_players_teams):
     return df_players_teams.groupby(['tmID', 'year'])['playerID'].agg(list).reset_index()
 
 
-def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive_player_stats):
+def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive_player_stats, mean=False):
     mean_l = []
     mean_o = []
     mean_d = []
@@ -69,7 +69,8 @@ def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive
     #         mean_l_divi[i] = mean_l[i] - mean_l[i-1]
 
     # df_players_teams['mean_diviation'] = mean_l_divi
-    # df_players_teams['mean'] = mean_l
+    if mean:
+        df_players_teams['mean'] = mean_l
 
     
 
