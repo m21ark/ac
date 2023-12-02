@@ -142,19 +142,12 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_teams_merged = df_players_teams.merge(
         df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
 
-
-    # df_merged = merge_coach_info(df_teams_merged, df_coaches)
     df_coach_ratings = coach_ranking(df_coaches, year=year)
-
-
-    # df_coaches = df_coaches.rename(columns={'bioID': 'coachID'})
-    # print (df_teams_merged)
 
     df_teams_merged = merge_coach_info(
         df_teams_merged, df_coach_ratings, df_coaches)
     
     
-
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
 
@@ -163,9 +156,6 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
 
     df_teams_merged = df_teams_merged.drop(['coachID'], axis=1)
     df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
-
-    
-    # df_teams_merged = df_teams_merged.drop(['awards'], axis=1)
 
     return df_teams_merged
 

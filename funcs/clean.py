@@ -18,7 +18,6 @@ def replace_col_with_ids(df, col_name):
 
 
 def basic_clean(df, cols=[]):
-    df = df.loc[:, df.nunique() > 1]
     df = df.drop(columns=cols, axis=1)
     df = remove_redundant_cols(df)
     return df
