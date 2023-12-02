@@ -5,7 +5,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
-
+# Classifies the 4 best teams of each conference as playoff teams
 def classify_playoff_entry(df_teams, year):
     df_teams_at_year = df_teams[df_teams.year == year]
 
@@ -15,15 +15,10 @@ def classify_playoff_entry(df_teams, year):
     ea_conf = ea_conf.sort_values(by=['predictions'], ascending=False)
     we_conf = we_conf.sort_values(by=['predictions'], ascending=False)
 
-    #print(ea_conf)
-    #print(we_conf)
-
     df_teams['playoff'] = "N"
 
     ea_playoff_teams = ea_conf.head(4)
-    we_playoff_teams = we_conf.head(4)
-
-    
+    we_playoff_teams = we_conf.head(4) 
 
     for _, row in ea_playoff_teams.iterrows():
         row['playoff'] = 'Y'
@@ -33,11 +28,11 @@ def classify_playoff_entry(df_teams, year):
 
     return df_teams, ea_playoff_teams, we_playoff_teams
 
-
+# Assigns the list of players to each team for their respective year
 def player_in_team_by_year(df_players_teams):
     return df_players_teams.groupby(['tmID', 'year'])['playerID'].agg(list).reset_index()
 
-
+# Calculates the overall offensive and defensive rating of each team according to the players in the team
 def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive_player_stats, mean=False):
     mean_l = []
     mean_o = []
@@ -81,8 +76,6 @@ def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive
                 # df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean_diviation'] = 0
             # else:
                 # df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean_diviation'] = df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean'] - df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year-1), 'mean']
-
-
 
     df_players_teams['offensive_strength'] = mean_o
     df_players_teams['defensive_strength'] = mean_d
@@ -154,6 +147,7 @@ def player_ranking_evolution(df_merged, playerID):
     df_pred = df_merged[['year', 'playerID', 'medium', 'predictions']]
 
     return df_pred
+
 
 def coach_ranking(df_coaches, year):
 

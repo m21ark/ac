@@ -1,11 +1,11 @@
-
+# Merge the dataframes df_players and df_players_teams
 def merge_player_info(df_players, df_players_teams):
     df_merged = df_players_teams.merge(
         df_players, left_on='playerID', right_on='bioID')
     df_merged = df_merged.drop(['bioID'], axis=1)
     return df_merged
 
-
+# Merge the dataframes related to coaches with the current dataframe
 def merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches):
     
     # merge df_coaches features year and tmID when stint = 0 to df_coach_ratings and then to df_teams_merged
@@ -20,13 +20,11 @@ def merge_coach_info(df_teams_merged, df_coach_ratings, df_coaches):
     df_teams_merged = df_teams_merged.merge(
         df_coach_ratings, left_on=['tmID', 'year'], right_on=['tmID', 'year'], how='left')
     
-    #fill na with 0
     df_teams_merged = df_teams_merged.fillna(0) 
-
 
     return df_teams_merged
 
-
+# Separate the awards into two dataframes, one for players and one for coaches
 def separate_awards_info(df_awards_players, year):
     df_awards_players = df_awards_players[df_awards_players['year'] < year]
     # Get the awards that contain the word coach in any case
@@ -37,7 +35,7 @@ def separate_awards_info(df_awards_players, year):
 
     return df_awards_players, df_awards_coaches
 
-
+# Assign the number of awards to each player
 def merge_awards_info(df_players, df_awards_players, year):
     df_awards_players = df_awards_players[df_awards_players['year'] < year]
     df_awards_players = df_awards_players.groupby(['playerID']).agg({
