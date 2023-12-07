@@ -8,6 +8,8 @@
 | Ricardo Matos | 202007962 |
 | Marco André   | 202004891 |
 
+Group 54
+
 ## Overview
 
 This presentation outlines a machine learning project focused on predicting Women's National Basketball Association (WNBA) playoff qualification using a decade of historical data. 
@@ -35,3 +37,6 @@ The dependencies needed to run the code are present in the `requirements.txt` fi
 pip3 install -r requirements.txt
 ```
 
+## Running the code
+
+The code is divided in 3 notebooks that can be ran in any order as they are independent from each other
