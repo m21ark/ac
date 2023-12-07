@@ -215,6 +215,7 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
         'boosting_type': 'gbdt',  # Gradient Boosting Decision Tree
         'num_leaves': 31,
         'learning_rate': 0.05,
+        'state': 2,
         'feature_fraction': 0.9,
         }
 

@@ -12,17 +12,18 @@ Group 54
 
 ## Overview
 
-This presentation outlines a machine learning project focused on predicting Women's National Basketball Association (WNBA) playoff qualification using a decade of historical data. 
+This presentation outlines a machine learning project focused on predicting Women's National Basketball Association (WNBA) playoff qualification using a decade of historical data.
 
-The project addresses the increasing demand for data-driven approaches in women's sports analytics. 
+The project addresses the increasing demand for data-driven approaches in women's sports analytics.
 
 Key components include:
+
 - data exploration
 - cleaning
 - feature engineering
-- model evaluation (using accuracy, recall, precision, and F1 score) 
+- model evaluation (using accuracy, recall, precision, and F1 score)
 
-The team employs a streamlined pipeline for model training, emphasizing the importance of precision in sports predictions. 
+The team employs a streamlined pipeline for model training, emphasizing the importance of precision in sports predictions.
 Results indicate promising outcomes, with attention to challenges faced, data quality, and the impact of feature selection and engineering.
 
 The presentation goes into further detail on the project's motivation, methodology, and results.
