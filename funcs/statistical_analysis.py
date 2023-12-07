@@ -201,7 +201,6 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
     })
     df_merged = df_merged.reset_index()
 
-    # todo: tirar de cima isto
     df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
 
     players_id = df_merged['playerID']
@@ -217,7 +216,6 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
 
     df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
 
-    # TODO: make this not by year but by player years performance
     df_merged['medium'] = df_merged.mean(axis=1)
 
     Y_ = df_merged['medium']
@@ -309,7 +307,6 @@ def player_offensive_rating(df_merged, year=10): # note : year is the last year 
     })
     df_merged = df_merged.reset_index()
 
-    # todo: tirar de cima isto
     df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
 
     players_id = df_merged['playerID']
@@ -367,7 +364,6 @@ def defensive_player_ranking(df_merged, year=10): # note : year is the last year
     })
     df_merged = df_merged.reset_index()
 
-    # todo: tirar de cima isto
     df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
 
     players_id = df_merged['playerID']

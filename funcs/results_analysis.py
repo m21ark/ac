@@ -1,11 +1,7 @@
-import itertools
 from colorama import Fore, Style
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import StandardScaler
 
 # Calculate the accuracy of the predictions
 def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoffs, display_results=True):
