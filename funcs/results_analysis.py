@@ -1,13 +1,9 @@
-import itertools
 from colorama import Fore, Style
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import StandardScaler
 
-
+# Calculate the accuracy of the predictions
 def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoffs, display_results=True):
 
     # Auxiliary function to color the text
@@ -80,9 +76,6 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
     total_recall = (TP / (TP + FN)) * 100
     total_f1 = (2 * total_precision * total_recall) / (total_precision + total_recall)
 
-    # total_accuracy = ((we_correct_count + ea_correct_count) / 8.0) * 100
-
-
     if display_results:
         print("\n")
         print("=" * 40)
@@ -107,6 +100,7 @@ def calculate_playoff_accuracy(year, predicted_ea_playoffs, predicted_we_playoff
 
     return total_precision
 
+# Display the confusion matrix
 def display_confusionMatrix(cm):
     classes = ['Playoff', 'Eliminated']
     plt.matshow(cm)
@@ -128,6 +122,7 @@ def display_confusionMatrix(cm):
 
     plt.show()
 
+# 
 def remove_currently_unknown_data(df_teams, year):
     # Remove all columns that are unknown at the start of the season on a given year
     # And replace them by the mean of the previous 2 years

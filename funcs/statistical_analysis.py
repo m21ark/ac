@@ -5,7 +5,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
-
+# Classifies the 4 best teams of each conference as playoff teams
 def classify_playoff_entry(df_teams, year):
     df_teams_at_year = df_teams[df_teams.year == year]
 
@@ -15,15 +15,10 @@ def classify_playoff_entry(df_teams, year):
     ea_conf = ea_conf.sort_values(by=['predictions'], ascending=False)
     we_conf = we_conf.sort_values(by=['predictions'], ascending=False)
 
-    #print(ea_conf)
-    #print(we_conf)
-
     df_teams['playoff'] = "N"
 
     ea_playoff_teams = ea_conf.head(4)
-    we_playoff_teams = we_conf.head(4)
-
-    
+    we_playoff_teams = we_conf.head(4) 
 
     for _, row in ea_playoff_teams.iterrows():
         row['playoff'] = 'Y'
@@ -33,11 +28,11 @@ def classify_playoff_entry(df_teams, year):
 
     return df_teams, ea_playoff_teams, we_playoff_teams
 
-
+# Assigns the list of players to each team for their respective year
 def player_in_team_by_year(df_players_teams):
     return df_players_teams.groupby(['tmID', 'year'])['playerID'].agg(list).reset_index()
 
-
+# Calculates the overall offensive and defensive rating of each team according to the players in the team
 def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive_player_stats, mean=False):
     mean_l = []
     mean_o = []
@@ -60,35 +55,14 @@ def team_mean(df_players_teams, df_pred, df_offensive_player_stats, df_defensive
         
         mean_d.append(top_12_defensive_players['predictions'].mean())
 
-    # mean_l_divi = [0 for _ in range(len(mean_l))]
-    # # # for each mean calculate the difference between this year mean and the last year mean
-    # for i in range(len(mean_l)):
-    #     if i == 1:
-    #         mean_l_divi[i] = 0
-    #     else:
-    #         mean_l_divi[i] = mean_l[i] - mean_l[i-1]
-
-    # df_players_teams['mean_diviation'] = mean_l_divi
     if mean:
         df_players_teams['mean'] = mean_l
-
-    
-
-    # for each team calculate the difference between this year teams mean and the last year mean
-    # for team in df_players_teams['tmID'].unique():
-        # for year in df_players_teams[df_players_teams['tmID'] == team]['year'].unique():
-            # if year == 0:
-                # df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean_diviation'] = 0
-            # else:
-                # df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean_diviation'] = df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year), 'mean'] - df_players_teams.loc[(df_players_teams['tmID'] == team) & (df_players_teams['year'] == year-1), 'mean']
-
-
 
     df_players_teams['offensive_strength'] = mean_o
     df_players_teams['defensive_strength'] = mean_d
     return df_players_teams
 
-
+# Calculate rankings for each player
 def player_ranking_evolution(df_merged, playerID):
     df_merged = df_merged[df_merged['playerID'] == playerID]
 
@@ -133,7 +107,6 @@ def player_ranking_evolution(df_merged, playerID):
 
     df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
 
-    # TODO: make this not by year but by player years performance
     df_merged['medium'] = df_merged.mean(axis=1)
 
     Y_ = df_merged['medium']
@@ -155,33 +128,30 @@ def player_ranking_evolution(df_merged, playerID):
 
     return df_pred
 
+# Calculate rankings for each coach
 def coach_ranking(df_coaches, year):
 
-     df_coaches = df_coaches[df_coaches['year'] < year]
+    df_coaches = df_coaches[df_coaches['year'] < year]
 
-     df_coaches['win_percentage_coach'] = (df_coaches['won'] + df_coaches['post_wins']) / (df_coaches['won'] +
-                                                                                                                  df_coaches['lost'] + df_coaches['post_wins'] + df_coaches['post_losses'])
-     df_coach_stats = df_coaches.groupby(['coachID']).agg({
-         'win_percentage_coach': 'mean',
-     })
-     df_coach_stats = df_coach_stats.reset_index()
+    df_coaches['win_percentage_coach'] = (df_coaches['won'] + df_coaches['post_wins']) / (df_coaches['won'] +
+                                                                                                                df_coaches['lost'] + df_coaches['post_wins'] + df_coaches['post_losses'])
+    df_coach_stats = df_coaches.groupby(['coachID']).agg({
+        'win_percentage_coach': 'mean',
+    })
+    df_coach_stats = df_coach_stats.reset_index()
 
-     #divide win_percentage_coach by the number of years
-     #df_coach_stats['win_percentage_coach'] = df_coach_stats['win_percentage_coach'] / (year - 1)
+    # use standard scaler to scale the data
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df_coach_stats.select_dtypes(include=[float]))
 
-     # use standard scaler to scale the data
-     scaler = StandardScaler()
-     X_scaled = scaler.fit_transform(df_coach_stats.select_dtypes(include=[float]))
+    df_coach_stats_scaled = pandas.DataFrame(X_scaled, columns=df_coach_stats.select_dtypes(include=[float]).columns)
 
-     df_coach_stats_scaled = pandas.DataFrame(X_scaled, columns=df_coach_stats.select_dtypes(include=[float]).columns)
+    # restore the string features after scaling
+    df_coach_stats_scaled[['coachID']] = df_coach_stats[['coachID']]
 
-     # restore the string features after scaling
-     df_coach_stats_scaled[['coachID']] = df_coach_stats[['coachID']]
-     #df_coach_stats_scaled[['win_percentage_coach']] = df_coach_stats[['win_percentage_coach']]
+    return df_coach_stats_scaled
 
-     return df_coach_stats_scaled
-
-
+# Calculate rankings for each player throughout all the years
 def player_rankings(df_merged, year=10): # note : year is the last year to count
 
     df_merged = df_merged[df_merged['year'] <= year]
@@ -231,7 +201,6 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
     })
     df_merged = df_merged.reset_index()
 
-    # todo: tirar de cima isto
     df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
 
     players_id = df_merged['playerID']
@@ -247,7 +216,6 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
 
     df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
 
-    # TODO: make this not by year but by player years performance
     df_merged['medium'] = df_merged.mean(axis=1)
 
     Y_ = df_merged['medium']
@@ -268,7 +236,7 @@ def player_rankings(df_merged, year=10): # note : year is the last year to count
 
     return df_pred
 
-
+# Calculate stats for each team, from the previous year
 def team_rankings(df_teams, year=10): 
     df_teams = df_teams[df_teams['year'] < year] # The year results of the year can't be included
 
@@ -300,8 +268,8 @@ def team_rankings(df_teams, year=10):
     df_teams['team_stats'] = df_teams['team_stats'].fillna(0)
 
     return df_teams
-# make a player offensive rating 
 
+# Make players offensive rating 
 def player_offensive_rating(df_merged, year=10): # note : year is the last year to count
     
     df_merged = df_merged[df_merged['year'] <= year]
@@ -339,7 +307,6 @@ def player_offensive_rating(df_merged, year=10): # note : year is the last year 
     })
     df_merged = df_merged.reset_index()
 
-    # todo: tirar de cima isto
     df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
 
     players_id = df_merged['playerID']
@@ -352,7 +319,6 @@ def player_offensive_rating(df_merged, year=10): # note : year is the last year 
 
     df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
 
-    # TODO: make this not by year but by player years performance
     df_merged['medium'] = df_merged.mean(axis=1)
 
     Y_ = df_merged['medium']
@@ -367,51 +333,8 @@ def player_offensive_rating(df_merged, year=10): # note : year is the last year 
 
     return df_pred
 
-# def add_player_stats(df_merged, year = 10):
-#     df_merged = df_merged[df_merged['year'] <= year]
-#     # df_merged = df_merged[df_merged['year'] >= year-4]
 
-#     df_merged = df_merged.groupby(['playerID', 'year', 'tmID']).agg({
-#         'Points': 'mean',
-#         'TotaloRebounds': 'mean',
-#         'TotaldRebounds': 'mean',
-#         'TotalAssists': 'mean',
-#         'TotalSteals': 'mean',
-#         'TotalBlocks': 'mean',
-#         'TotalTurnovers': 'mean',
-#         'TotalPF': 'mean',
-#         'TotalfgMade': 'mean',
-#         'TotalftMade': 'mean',
-#         'TotalthreeMade': 'mean',
-#     })
-
-#     df_merged = df_merged.reset_index()
-
-#     # group by year and player
-#     # df_merged = df_merged.groupby(['playerID']).agg({
-#         # 'Points': 'mean',
-#         # 'TotalMinutes': 'mean',
-#         # 'TotaloRebounds': 'mean',
-#         # 'TotaldRebounds': 'mean',
-#         # 'TotalRebounds': 'mean',
-#         # 'TotalAssists': 'mean',
-#         # 'TotalSteals': 'mean',
-#         # 'TotalBlocks': 'mean',
-#         # 'TotalTurnovers': 'mean',
-#         # 'TotalPF': 'mean',
-#         # 'TotalfgAttempted': 'mean',
-#         # 'TotalfgMade': 'mean',
-#         # 'TotalftAttempted': 'mean',
-#         # 'TotalftMade': 'mean',
-#         # 'TotalthreeAttempted': 'mean',
-#         # 'TotalthreeMade': 'mean',
-#         # 'TotalGP': 'mean'
-#     # })
-#     # df_merged = df_merged.reset_index()
-
-#     return df_merged
-
-
+# Make players defensive rating
 def defensive_player_ranking(df_merged, year=10): # note : year is the last year to count
     
     df_merged = df_merged[df_merged['year'] <= year]
@@ -441,7 +364,6 @@ def defensive_player_ranking(df_merged, year=10): # note : year is the last year
     })
     df_merged = df_merged.reset_index()
 
-    # todo: tirar de cima isto
     df_merged = df_merged.drop(['TotalMinutes', 'TotalGP'], axis=1)
 
     players_id = df_merged['playerID']
@@ -454,7 +376,6 @@ def defensive_player_ranking(df_merged, year=10): # note : year is the last year
 
     df_merged = pandas.DataFrame(X_scaled, columns=df_merged.columns)
 
-    # TODO: make this not by year but by player years performance
     df_merged['medium'] = df_merged.mean(axis=1)
 
     Y_ = df_merged['medium']

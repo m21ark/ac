@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
 
 from funcs.statistical_analysis import *
 from funcs.results_analysis import *
@@ -25,9 +26,8 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=pd.errors.SettingWithCopyWarning)
 
-
+# Load the clean datasets
 def load_data():
-    # Load the clean datasets
     df_teams = pd.read_csv("dataset/cleaned/teams.csv")
     df_teams_post = pd.read_csv("dataset/cleaned/teams_post.csv")
     df_series_post = pd.read_csv("dataset/cleaned/series_post.csv")
@@ -38,10 +38,8 @@ def load_data():
 
     return [df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players]
 
-
+# Loading Original DataFrames
 def apply_cleaning():
-
-    # Loading Original DataFrames
     df_teams = pd.read_csv("dataset/original/teams.csv")
     df_teams_post = pd.read_csv("dataset/original/teams_post.csv")
     df_series_post = pd.read_csv("dataset/original/series_post.csv")
@@ -68,7 +66,7 @@ def apply_cleaning():
     df_teams_post.to_csv("dataset/cleaned/teams_post.csv", index=False)
     df_teams.to_csv("dataset/cleaned/teams.csv", index=False)
 
-
+# Applies the model to the data using an expanding window logic with decay
 def expanding_window_decay_cross_validation(data, model_func, features, year, decay_rate=0.5):
     clf = model_func()
 
@@ -90,7 +88,7 @@ def expanding_window_decay_cross_validation(data, model_func, features, year, de
 
     return clf
 
-
+# Joins all the used dataframes into one
 def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players_teams, df_coaches, df_awards_players, year):
 
     df_awards_players, df_awards_coaches = separate_awards_info(
@@ -142,19 +140,12 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_teams_merged = df_players_teams.merge(
         df_teams[['tmID', 'year', 'confID', 'playoff']], on=['tmID', 'year'], how='left')
 
-
-    # df_merged = merge_coach_info(df_teams_merged, df_coaches)
     df_coach_ratings = coach_ranking(df_coaches, year=year)
-
-
-    # df_coaches = df_coaches.rename(columns={'bioID': 'coachID'})
-    # print (df_teams_merged)
 
     df_teams_merged = merge_coach_info(
         df_teams_merged, df_coach_ratings, df_coaches)
     
     
-
     df_players = merge_awards_info(df_players, df_awards_players, year)
     df_coaches = merge_awards_info(df_coaches, df_awards_coaches, year)
 
@@ -164,14 +155,10 @@ def global_merge(df_teams, df_teams_post, df_series_post, df_players, df_players
     df_teams_merged = df_teams_merged.drop(['coachID'], axis=1)
     df_teams_merged = df_teams_merged.drop(['playerID'], axis=1)
 
-    
-    # df_teams_merged = df_teams_merged.drop(['awards'], axis=1)
-
     return df_teams_merged
 
-
+# Splits the data into test/train and applies the model
 def model_classification(df_teams_merged, year, model = lambda: RandomForestClassifier(n_estimators=100, random_state=42), grid=False, parameters={}, lightGBM=False):
-    # teams on year
 
     test = df_teams_merged[df_teams_merged['year'] == year]
     train = df_teams_merged[df_teams_merged['year'] < year]
@@ -206,6 +193,19 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
     
         clf.fit(train.drop(['playoff', 'year', 'tmID'], axis=1), train['playoff'])
         predictions = clf.predict_proba(test.drop(['playoff', 'year', 'tmID'], axis=1))[:, 1]
+
+        # Draw a ROC curve
+        fpr, tpr, thresholds = roc_curve(test['playoff'], predictions)
+        roc_result = [fpr, tpr, thresholds]
+        # plt.figure(figsize=(8, 6))
+        # plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+        # plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random')
+        # plt.xlabel('False Positive Rate')
+        # plt.ylabel('True Positive Rate')
+        # plt.title('Receiver Operating Characteristic (ROC) Curve of model: ' + clf.__class__.__name__ + ' for year ' + str(year))  
+        # plt.legend(loc='lower right')
+        # plt.show()
+
     else:
         test = lgb.Dataset(test.drop(['playoff', 'year', 'tmID'], axis=1), label=test['playoff'])
         train = lgb.Dataset(train.drop(['playoff', 'year', 'tmID'], axis=1), label=train['playoff'])
@@ -228,7 +228,7 @@ def model_classification(df_teams_merged, year, model = lambda: RandomForestClas
     df_teams_merged.loc[df_teams_merged['year'] == year, 'predictions'] = predictions
 
 
-    return df_teams_merged, clf
+    return df_teams_merged, clf, roc_result
 
 
 def pipeline_clf(year = 10):
@@ -243,6 +243,7 @@ def pipeline_clf(year = 10):
 
     return df_teams_merged
 
+# Function that runs the pipeline for a given year
 def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=100, random_state=42),  display_results=False, lightGBM=False):
 
     if year > 11 or year < 2:
@@ -256,7 +257,7 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
     # if (lightGBM):
-    df_teams_merged, clf = model_classification(df_teams_merged, year, model=model)
+    df_teams_merged, clf, roc_result = model_classification(df_teams_merged, year, model=model)
     # else:
     #     train = df_teams_merged[df_teams_merged['year'] < year]
     #     test = df_teams_post[df_teams_post['year'] == year]
@@ -289,9 +290,10 @@ def pipeline_year(year=10, model =lambda: RandomForestClassifier(n_estimators=10
 
     total_precision = calculate_playoff_accuracy(
         year, ea_predictions, we_predictions, display_results)
+    
+    return {'precision' :total_precision, 'model': clf, 'roc': roc_result}
 
-    return total_precision
-
+# Function that runs the pipeline for a given year using grid search
 def pipeline_year_grid_search(year=10, model = lambda: RandomForestClassifier(), parameters={}, display_results=False):
 
     if year > 11 or year < 2:
@@ -305,7 +307,7 @@ def pipeline_year_grid_search(year=10, model = lambda: RandomForestClassifier(),
                                    df_players, df_players_teams, df_coaches, df_awards_players, year)
 
     
-    df_teams_merged, clf = model_classification(df_teams_merged, year, model=model, grid=True, parameters=parameters)
+    df_teams_merged, clf, roc_result = model_classification(df_teams_merged, year, model=model, grid=True, parameters=parameters)
 
     df_teams, ea_teams, we_teams = classify_playoff_entry(df_teams_merged, year)
 
@@ -314,10 +316,10 @@ def pipeline_year_grid_search(year=10, model = lambda: RandomForestClassifier(),
 
     total_precision = calculate_playoff_accuracy(year, ea_predictions, we_predictions, display_results)
 
-    return total_precision
+    return {'precision' :total_precision, 'model': clf, 'roc': roc_result}
 
 
-
+# Function that plots the results of the pipeline for a certain year range
 def check_accuracy_by_year():
     accs = []
     years = list(range(2, 11))
